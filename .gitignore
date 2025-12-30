@@ -31,6 +31,15 @@ playground.xcworkspace
 
 .build/
 
+# Local artifacts
+.DS_Store
+build/
+Resources/NNUE/*.nnue
+
+# Xcode project workspace (auto-generated wrapper inside .xcodeproj)
+*.xcodeproj/project.xcworkspace/
+!*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+
 # CocoaPods
 #
 # We recommend against adding the Pods directory to your .gitignore. However

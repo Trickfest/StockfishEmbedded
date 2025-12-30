@@ -1,0 +1,1111 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		2AB364236BFA40F6B5E240DA /* libSFEngine-iOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000010 /* libSFEngine-iOS.a */; };
+		364775576D450054C8423863 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18FC4BF95FC6AC86D6FDA53B /* main.swift */; };
+		375B87212FEFE9BAC51B38B4 /* libSFEngine-macOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000011 /* libSFEngine-macOS.a */; };
+		6C7ED8640B00457B87420328 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F63EEF49C294F2190977114 /* ContentView.swift */; };
+		9738C6A9655B42E3B448D0D1 /* SFEngineTestSwiftUIApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38A8B7907A3D417A9D55BDAC /* SFEngineTestSwiftUIApp.swift */; };
+		A1F000000000000000000300 /* memory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000200 /* memory.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000301 /* thread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000201 /* thread.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000302 /* timeman.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000202 /* timeman.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000303 /* ucioption.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000203 /* ucioption.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000304 /* network.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000204 /* network.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000305 /* nnue_accumulator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000205 /* nnue_accumulator.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000306 /* half_ka_v2_hm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000206 /* half_ka_v2_hm.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000307 /* full_threats.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000207 /* full_threats.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000308 /* nnue_misc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000208 /* nnue_misc.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000309 /* misc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000209 /* misc.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F00000000000000000030A /* bitboard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F00000000000000000020A /* bitboard.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F00000000000000000030B /* score.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F00000000000000000020B /* score.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F00000000000000000030C /* benchmark.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F00000000000000000020C /* benchmark.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F00000000000000000030D /* movepick.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F00000000000000000020D /* movepick.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F00000000000000000030E /* tune.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F00000000000000000020E /* tune.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F00000000000000000030F /* tbprobe.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F00000000000000000020F /* tbprobe.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000310 /* evaluate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000210 /* evaluate.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000311 /* search.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000211 /* search.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000312 /* engine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000212 /* engine.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000313 /* movegen.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000213 /* movegen.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000314 /* tt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000214 /* tt.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000315 /* position.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000215 /* position.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000316 /* uci.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000216 /* uci.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000317 /* EmbeddedUCI.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000102 /* EmbeddedUCI.cpp */; };
+		A1F000000000000000000318 /* SFEngine.mm in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000101 /* SFEngine.mm */; };
+		A1F000000000000000000360 /* SFEngine.h in Headers */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000100 /* SFEngine.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		A1F000000000000000000380 /* memory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000200 /* memory.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000381 /* thread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000201 /* thread.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000382 /* timeman.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000202 /* timeman.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000383 /* ucioption.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000203 /* ucioption.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000384 /* network.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000204 /* network.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000385 /* nnue_accumulator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000205 /* nnue_accumulator.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000386 /* half_ka_v2_hm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000206 /* half_ka_v2_hm.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000387 /* full_threats.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000207 /* full_threats.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000388 /* nnue_misc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000208 /* nnue_misc.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000389 /* misc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000209 /* misc.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F00000000000000000038A /* bitboard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F00000000000000000020A /* bitboard.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F00000000000000000038B /* score.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F00000000000000000020B /* score.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F00000000000000000038C /* benchmark.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F00000000000000000020C /* benchmark.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F00000000000000000038D /* movepick.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F00000000000000000020D /* movepick.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F00000000000000000038E /* tune.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F00000000000000000020E /* tune.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F00000000000000000038F /* tbprobe.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F00000000000000000020F /* tbprobe.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000390 /* evaluate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000210 /* evaluate.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000391 /* search.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000211 /* search.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000392 /* engine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000212 /* engine.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000393 /* movegen.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000213 /* movegen.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000394 /* tt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000214 /* tt.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000395 /* position.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000215 /* position.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000396 /* uci.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000216 /* uci.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000397 /* EmbeddedUCI.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000102 /* EmbeddedUCI.cpp */; };
+		A1F000000000000000000398 /* SFEngine.mm in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000101 /* SFEngine.mm */; };
+		A1F0000000000000000003A0 /* SFEngine.h in Headers */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000100 /* SFEngine.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		A1F0000000000000000003F0 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000107 /* main.m */; };
+		A1F0000000000000000003F1 /* libSFEngine-macOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000011 /* libSFEngine-macOS.a */; };
+		E43DAAD651064B9CAA06BCF2 /* SFEngine+Sendable.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4F88859D2DF4C099F70B7A3 /* SFEngine+Sendable.swift */; };
+		19B7738511DB458D87349533 /* SFEngineSoakRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C19554DECD4A4E45AFC973E9 /* SFEngineSoakRunner.swift */; };
+		F00973C5857A4D6DAFF89A5E /* SFEngineCLISoakTestSwiftMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B96BF64DC9D499DABA0BA9B /* SFEngineCLISoakTestSwiftMain.swift */; };
+		7D29D634FCFE4B0F9EBB273E /* SFEngineSoakRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C19554DECD4A4E45AFC973E9 /* SFEngineSoakRunner.swift */; };
+		C56548E1016C4EB2A901C923 /* libSFEngine-macOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000011 /* libSFEngine-macOS.a */; };
+		C0274C8526244970A8552B27 /* ArgumentParser in Frameworks */ = {isa = PBXBuildFile; productRef = 7425DBD7201F406F91FA976F /* ArgumentParser */; };
+		EACB132F8DD84607B369B543 /* EngineModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D82D44D67472436ABDD68F48 /* EngineModel.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A0B89B547B6E8219C9922259 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1F000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1F000000000000000000021;
+			remoteInfo = "SFEngine-macOS";
+		};
+		BB7544DE2EF6E9C9006045C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1F000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1F000000000000000000021;
+			remoteInfo = "SFEngine-macOS";
+		};
+		E9DCEEA881594B108AE9AD98 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1F000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1F000000000000000000020;
+			remoteInfo = "SFEngine-iOS";
+		};
+		950AAE5C1547462891DD1097 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1F000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1F000000000000000000021;
+			remoteInfo = "SFEngine-macOS";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0CB64E242718391BA883B6E1 /* SFEngineCLITestSwift */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SFEngineCLITestSwift; sourceTree = BUILT_PRODUCTS_DIR; };
+		40390B978CB145D2A31E6562 /* SFEngineCLISoakTestSwift */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SFEngineCLISoakTestSwift; sourceTree = BUILT_PRODUCTS_DIR; };
+		18FC4BF95FC6AC86D6FDA53B /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		7B96BF64DC9D499DABA0BA9B /* SFEngineCLISoakTestSwiftMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFEngineCLISoakTestSwiftMain.swift; sourceTree = "<group>"; };
+		19573FA5D11649A090D35819 /* SFEngineCLISoakTestSwift-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SFEngineCLISoakTestSwift-Bridging-Header.h"; sourceTree = "<group>"; };
+		29B99EFD72584649B7FE8F2D /* SFEngineTestSwiftUI-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SFEngineTestSwiftUI-Bridging-Header.h"; sourceTree = "<group>"; };
+		31B19E725C2C8E1955530DE2 /* SFEngineCLITestSwift-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SFEngineCLITestSwift-Bridging-Header.h"; sourceTree = "<group>"; };
+		38A8B7907A3D417A9D55BDAC /* SFEngineTestSwiftUIApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFEngineTestSwiftUIApp.swift; sourceTree = "<group>"; };
+		4F63EEF49C294F2190977114 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		59890A02FB8E452696D18B3D /* SFEngineTestSwiftUI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SFEngineTestSwiftUI.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		887ACE3A81604A21AED46F1A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A1F000000000000000000010 /* libSFEngine-iOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libSFEngine-iOS.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1F000000000000000000011 /* libSFEngine-macOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libSFEngine-macOS.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1F000000000000000000012 /* SFEngineCLITestObjC */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SFEngineCLITestObjC; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1F000000000000000000100 /* SFEngine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SFEngine.h; sourceTree = "<group>"; };
+		A1F000000000000000000101 /* SFEngine.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = SFEngine.mm; sourceTree = "<group>"; };
+		A1F000000000000000000102 /* EmbeddedUCI.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = EmbeddedUCI.cpp; sourceTree = "<group>"; };
+		A1F000000000000000000103 /* EmbeddedUCI.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = EmbeddedUCI.hpp; sourceTree = "<group>"; };
+		A1F000000000000000000104 /* CommandStream.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = CommandStream.hpp; sourceTree = "<group>"; };
+		A1F000000000000000000105 /* ThreadSafeQueue.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ThreadSafeQueue.hpp; sourceTree = "<group>"; };
+		A1F000000000000000000106 /* LineBufferStream.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = LineBufferStream.hpp; sourceTree = "<group>"; };
+		A1F000000000000000000107 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		A1F000000000000000000200 /* memory.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = memory.cpp; sourceTree = "<group>"; };
+		A1F000000000000000000201 /* thread.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = thread.cpp; sourceTree = "<group>"; };
+		A1F000000000000000000202 /* timeman.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = timeman.cpp; sourceTree = "<group>"; };
+		A1F000000000000000000203 /* ucioption.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ucioption.cpp; sourceTree = "<group>"; };
+		A1F000000000000000000204 /* network.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = network.cpp; sourceTree = "<group>"; };
+		A1F000000000000000000205 /* nnue_accumulator.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = nnue_accumulator.cpp; sourceTree = "<group>"; };
+		A1F000000000000000000206 /* half_ka_v2_hm.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = half_ka_v2_hm.cpp; sourceTree = "<group>"; };
+		A1F000000000000000000207 /* full_threats.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = full_threats.cpp; sourceTree = "<group>"; };
+		A1F000000000000000000208 /* nnue_misc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = nnue_misc.cpp; sourceTree = "<group>"; };
+		A1F000000000000000000209 /* misc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = misc.cpp; sourceTree = "<group>"; };
+		A1F00000000000000000020A /* bitboard.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = bitboard.cpp; sourceTree = "<group>"; };
+		A1F00000000000000000020B /* score.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = score.cpp; sourceTree = "<group>"; };
+		A1F00000000000000000020C /* benchmark.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = benchmark.cpp; sourceTree = "<group>"; };
+		A1F00000000000000000020D /* movepick.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = movepick.cpp; sourceTree = "<group>"; };
+		A1F00000000000000000020E /* tune.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = tune.cpp; sourceTree = "<group>"; };
+		A1F00000000000000000020F /* tbprobe.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = tbprobe.cpp; sourceTree = "<group>"; };
+		A1F000000000000000000210 /* evaluate.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = evaluate.cpp; sourceTree = "<group>"; };
+		A1F000000000000000000211 /* search.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = search.cpp; sourceTree = "<group>"; };
+		A1F000000000000000000212 /* engine.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = engine.cpp; sourceTree = "<group>"; };
+		A1F000000000000000000213 /* movegen.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = movegen.cpp; sourceTree = "<group>"; };
+		A1F000000000000000000214 /* tt.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = tt.cpp; sourceTree = "<group>"; };
+		A1F000000000000000000215 /* position.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = position.cpp; sourceTree = "<group>"; };
+		A1F000000000000000000216 /* uci.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = uci.cpp; sourceTree = "<group>"; };
+		B4F88859D2DF4C099F70B7A3 /* SFEngine+Sendable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SFEngine+Sendable.swift"; sourceTree = "<group>"; };
+		C19554DECD4A4E45AFC973E9 /* SFEngineSoakRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFEngineSoakRunner.swift; sourceTree = "<group>"; };
+		D82D44D67472436ABDD68F48 /* EngineModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineModel.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		66168A68CC8563CBF76DCC11 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				375B87212FEFE9BAC51B38B4 /* libSFEngine-macOS.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8414CAC7A8354E2D997AA153 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2AB364236BFA40F6B5E240DA /* libSFEngine-iOS.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1F000000000000000000035 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1F0000000000000000003F1 /* libSFEngine-macOS.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		120EBF9225D54FDFADF98F3B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C56548E1016C4EB2A901C923 /* libSFEngine-macOS.a in Frameworks */,
+				C0274C8526244970A8552B27 /* ArgumentParser in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		45658148485272DFEDA21EA3 /* CLISwift */ = {
+			isa = PBXGroup;
+			children = (
+				18FC4BF95FC6AC86D6FDA53B /* main.swift */,
+				31B19E725C2C8E1955530DE2 /* SFEngineCLITestSwift-Bridging-Header.h */,
+			);
+			path = CLISwift;
+			sourceTree = "<group>";
+		};
+		A1F000000000000000000002 = {
+			isa = PBXGroup;
+			children = (
+				A1F000000000000000000004 /* Sources */,
+				EB4E1C50080E466FA06D0992 /* IOSSwiftUI */,
+				A1F000000000000000000007 /* ThirdParty */,
+				A1F000000000000000000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A1F000000000000000000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A1F000000000000000000010 /* libSFEngine-iOS.a */,
+				A1F000000000000000000011 /* libSFEngine-macOS.a */,
+				A1F000000000000000000012 /* SFEngineCLITestObjC */,
+				0CB64E242718391BA883B6E1 /* SFEngineCLITestSwift */,
+				40390B978CB145D2A31E6562 /* SFEngineCLISoakTestSwift */,
+				59890A02FB8E452696D18B3D /* SFEngineTestSwiftUI.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A1F000000000000000000004 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				A1F000000000000000000005 /* SFEngine */,
+				A1F000000000000000000006 /* CLIObjC */,
+				45658148485272DFEDA21EA3 /* CLISwift */,
+				4EFB4C043649420686C00D7D /* CLISoakSwift */,
+				DCF4E202D9164FA08B53B892 /* SFEngineSoak */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		A1F000000000000000000005 /* SFEngine */ = {
+			isa = PBXGroup;
+			children = (
+				A1F000000000000000000100 /* SFEngine.h */,
+				A1F000000000000000000101 /* SFEngine.mm */,
+				A1F000000000000000000102 /* EmbeddedUCI.cpp */,
+				A1F000000000000000000103 /* EmbeddedUCI.hpp */,
+				A1F000000000000000000104 /* CommandStream.hpp */,
+				A1F000000000000000000105 /* ThreadSafeQueue.hpp */,
+				A1F000000000000000000106 /* LineBufferStream.hpp */,
+			);
+			path = SFEngine;
+			sourceTree = "<group>";
+		};
+		A1F000000000000000000006 /* CLIObjC */ = {
+			isa = PBXGroup;
+			children = (
+				A1F000000000000000000107 /* main.m */,
+			);
+			path = CLIObjC;
+			sourceTree = "<group>";
+		};
+		4EFB4C043649420686C00D7D /* CLISoakSwift */ = {
+			isa = PBXGroup;
+			children = (
+				7B96BF64DC9D499DABA0BA9B /* SFEngineCLISoakTestSwiftMain.swift */,
+				19573FA5D11649A090D35819 /* SFEngineCLISoakTestSwift-Bridging-Header.h */,
+			);
+			path = CLISoakSwift;
+			sourceTree = "<group>";
+		};
+		DCF4E202D9164FA08B53B892 /* SFEngineSoak */ = {
+			isa = PBXGroup;
+			children = (
+				C19554DECD4A4E45AFC973E9 /* SFEngineSoakRunner.swift */,
+			);
+			path = SFEngineSoak;
+			sourceTree = "<group>";
+		};
+		A1F000000000000000000007 /* ThirdParty */ = {
+			isa = PBXGroup;
+			children = (
+				A1F000000000000000000008 /* Stockfish/src */,
+			);
+			path = ThirdParty;
+			sourceTree = "<group>";
+		};
+		A1F000000000000000000008 /* Stockfish/src */ = {
+			isa = PBXGroup;
+			children = (
+				A1F000000000000000000200 /* memory.cpp */,
+				A1F000000000000000000201 /* thread.cpp */,
+				A1F000000000000000000202 /* timeman.cpp */,
+				A1F000000000000000000203 /* ucioption.cpp */,
+				A1F000000000000000000209 /* misc.cpp */,
+				A1F00000000000000000020A /* bitboard.cpp */,
+				A1F00000000000000000020B /* score.cpp */,
+				A1F00000000000000000020C /* benchmark.cpp */,
+				A1F00000000000000000020D /* movepick.cpp */,
+				A1F00000000000000000020E /* tune.cpp */,
+				A1F000000000000000000210 /* evaluate.cpp */,
+				A1F000000000000000000211 /* search.cpp */,
+				A1F000000000000000000212 /* engine.cpp */,
+				A1F000000000000000000213 /* movegen.cpp */,
+				A1F000000000000000000214 /* tt.cpp */,
+				A1F000000000000000000215 /* position.cpp */,
+				A1F000000000000000000216 /* uci.cpp */,
+				A1F000000000000000000009 /* nnue */,
+				A1F00000000000000000000B /* syzygy */,
+			);
+			path = Stockfish/src;
+			sourceTree = "<group>";
+		};
+		A1F000000000000000000009 /* nnue */ = {
+			isa = PBXGroup;
+			children = (
+				A1F000000000000000000204 /* network.cpp */,
+				A1F000000000000000000205 /* nnue_accumulator.cpp */,
+				A1F000000000000000000208 /* nnue_misc.cpp */,
+				A1F00000000000000000000A /* features */,
+			);
+			path = nnue;
+			sourceTree = "<group>";
+		};
+		A1F00000000000000000000A /* features */ = {
+			isa = PBXGroup;
+			children = (
+				A1F000000000000000000206 /* half_ka_v2_hm.cpp */,
+				A1F000000000000000000207 /* full_threats.cpp */,
+			);
+			path = features;
+			sourceTree = "<group>";
+		};
+		A1F00000000000000000000B /* syzygy */ = {
+			isa = PBXGroup;
+			children = (
+				A1F00000000000000000020F /* tbprobe.cpp */,
+			);
+			path = syzygy;
+			sourceTree = "<group>";
+		};
+		EB4E1C50080E466FA06D0992 /* IOSSwiftUI */ = {
+			isa = PBXGroup;
+			children = (
+				38A8B7907A3D417A9D55BDAC /* SFEngineTestSwiftUIApp.swift */,
+				4F63EEF49C294F2190977114 /* ContentView.swift */,
+				D82D44D67472436ABDD68F48 /* EngineModel.swift */,
+				B4F88859D2DF4C099F70B7A3 /* SFEngine+Sendable.swift */,
+				29B99EFD72584649B7FE8F2D /* SFEngineTestSwiftUI-Bridging-Header.h */,
+				887ACE3A81604A21AED46F1A /* Info.plist */,
+			);
+			path = IOSSwiftUI;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		A1F000000000000000000031 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1F000000000000000000360 /* SFEngine.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1F000000000000000000033 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1F0000000000000000003A0 /* SFEngine.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		8C5B576E7090711A86C0AE88 /* SFEngineCLITestSwift */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C6217AAA81AFECDCEEC87DC8 /* Build configuration list for PBXNativeTarget "SFEngineCLITestSwift" */;
+			buildPhases = (
+				549FC414D071C7832B09C0C2 /* Sources */,
+				66168A68CC8563CBF76DCC11 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9721EC4CE6A1621EDC780B2A /* PBXTargetDependency */,
+			);
+			name = SFEngineCLITestSwift;
+			productName = SFEngineCLITestSwift;
+			productReference = 0CB64E242718391BA883B6E1 /* SFEngineCLITestSwift */;
+			productType = "com.apple.product-type.tool";
+		};
+		3C47616DBCEC4A4EB3123B49 /* SFEngineCLISoakTestSwift */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8FCE500D4BF04EB49134AB45 /* Build configuration list for PBXNativeTarget "SFEngineCLISoakTestSwift" */;
+			buildPhases = (
+				569B033B28A642829ADBB4EC /* Sources */,
+				120EBF9225D54FDFADF98F3B /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2469E3FDA6124893B824848F /* PBXTargetDependency */,
+			);
+			name = SFEngineCLISoakTestSwift;
+			packageProductDependencies = (
+				7425DBD7201F406F91FA976F /* ArgumentParser */,
+			);
+			productName = SFEngineCLISoakTestSwift;
+			productReference = 40390B978CB145D2A31E6562 /* SFEngineCLISoakTestSwift */;
+			productType = "com.apple.product-type.tool";
+		};
+		98DC9904BFEC439699936686 /* SFEngineTestSwiftUI */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D65338C95375469F98014D46 /* Build configuration list for PBXNativeTarget "SFEngineTestSwiftUI" */;
+			buildPhases = (
+				DD96E7276763443588AF00D3 /* Sources */,
+				8414CAC7A8354E2D997AA153 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				37BC351B749E4256905A262A /* PBXTargetDependency */,
+			);
+			name = SFEngineTestSwiftUI;
+			productName = SFEngineTestSwiftUI;
+			productReference = 59890A02FB8E452696D18B3D /* SFEngineTestSwiftUI.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A1F000000000000000000020 /* SFEngine-iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1F000000000000000000041 /* Build configuration list for PBXNativeTarget "SFEngine-iOS" */;
+			buildPhases = (
+				A1F000000000000000000030 /* Sources */,
+				A1F000000000000000000031 /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "SFEngine-iOS";
+			productName = "SFEngine-iOS";
+			productReference = A1F000000000000000000010 /* libSFEngine-iOS.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		A1F000000000000000000021 /* SFEngine-macOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1F000000000000000000042 /* Build configuration list for PBXNativeTarget "SFEngine-macOS" */;
+			buildPhases = (
+				A1F000000000000000000032 /* Sources */,
+				A1F000000000000000000033 /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "SFEngine-macOS";
+			productName = "SFEngine-macOS";
+			productReference = A1F000000000000000000011 /* libSFEngine-macOS.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		A1F000000000000000000022 /* SFEngineCLITestObjC */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1F000000000000000000043 /* Build configuration list for PBXNativeTarget "SFEngineCLITestObjC" */;
+			buildPhases = (
+				A1F000000000000000000034 /* Sources */,
+				A1F000000000000000000035 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A1F000000000000000000901 /* PBXTargetDependency */,
+			);
+			name = SFEngineCLITestObjC;
+			productName = SFEngineCLITestObjC;
+			productReference = A1F000000000000000000012 /* SFEngineCLITestObjC */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A1F000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1500;
+			};
+			buildConfigurationList = A1F000000000000000000040 /* Build configuration list for PBXProject "StockfishEmbedded" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = A1F000000000000000000002;
+			packageReferences = (
+				F09AE2666C2E4DD788F4AA44 /* XCRemoteSwiftPackageReference "swift-argument-parser" */,
+			);
+			productRefGroup = A1F000000000000000000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A1F000000000000000000020 /* SFEngine-iOS */,
+				A1F000000000000000000021 /* SFEngine-macOS */,
+				A1F000000000000000000022 /* SFEngineCLITestObjC */,
+				8C5B576E7090711A86C0AE88 /* SFEngineCLITestSwift */,
+				3C47616DBCEC4A4EB3123B49 /* SFEngineCLISoakTestSwift */,
+				98DC9904BFEC439699936686 /* SFEngineTestSwiftUI */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		549FC414D071C7832B09C0C2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				364775576D450054C8423863 /* main.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1F000000000000000000030 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1F000000000000000000300 /* memory.cpp in Sources */,
+				A1F000000000000000000301 /* thread.cpp in Sources */,
+				A1F000000000000000000302 /* timeman.cpp in Sources */,
+				A1F000000000000000000303 /* ucioption.cpp in Sources */,
+				A1F000000000000000000304 /* network.cpp in Sources */,
+				A1F000000000000000000305 /* nnue_accumulator.cpp in Sources */,
+				A1F000000000000000000306 /* half_ka_v2_hm.cpp in Sources */,
+				A1F000000000000000000307 /* full_threats.cpp in Sources */,
+				A1F000000000000000000308 /* nnue_misc.cpp in Sources */,
+				A1F000000000000000000309 /* misc.cpp in Sources */,
+				A1F00000000000000000030A /* bitboard.cpp in Sources */,
+				A1F00000000000000000030B /* score.cpp in Sources */,
+				A1F00000000000000000030C /* benchmark.cpp in Sources */,
+				A1F00000000000000000030D /* movepick.cpp in Sources */,
+				A1F00000000000000000030E /* tune.cpp in Sources */,
+				A1F00000000000000000030F /* tbprobe.cpp in Sources */,
+				A1F000000000000000000310 /* evaluate.cpp in Sources */,
+				A1F000000000000000000311 /* search.cpp in Sources */,
+				A1F000000000000000000312 /* engine.cpp in Sources */,
+				A1F000000000000000000313 /* movegen.cpp in Sources */,
+				A1F000000000000000000314 /* tt.cpp in Sources */,
+				A1F000000000000000000315 /* position.cpp in Sources */,
+				A1F000000000000000000316 /* uci.cpp in Sources */,
+				A1F000000000000000000317 /* EmbeddedUCI.cpp in Sources */,
+				A1F000000000000000000318 /* SFEngine.mm in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1F000000000000000000032 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1F000000000000000000380 /* memory.cpp in Sources */,
+				A1F000000000000000000381 /* thread.cpp in Sources */,
+				A1F000000000000000000382 /* timeman.cpp in Sources */,
+				A1F000000000000000000383 /* ucioption.cpp in Sources */,
+				A1F000000000000000000384 /* network.cpp in Sources */,
+				A1F000000000000000000385 /* nnue_accumulator.cpp in Sources */,
+				A1F000000000000000000386 /* half_ka_v2_hm.cpp in Sources */,
+				A1F000000000000000000387 /* full_threats.cpp in Sources */,
+				A1F000000000000000000388 /* nnue_misc.cpp in Sources */,
+				A1F000000000000000000389 /* misc.cpp in Sources */,
+				A1F00000000000000000038A /* bitboard.cpp in Sources */,
+				A1F00000000000000000038B /* score.cpp in Sources */,
+				A1F00000000000000000038C /* benchmark.cpp in Sources */,
+				A1F00000000000000000038D /* movepick.cpp in Sources */,
+				A1F00000000000000000038E /* tune.cpp in Sources */,
+				A1F00000000000000000038F /* tbprobe.cpp in Sources */,
+				A1F000000000000000000390 /* evaluate.cpp in Sources */,
+				A1F000000000000000000391 /* search.cpp in Sources */,
+				A1F000000000000000000392 /* engine.cpp in Sources */,
+				A1F000000000000000000393 /* movegen.cpp in Sources */,
+				A1F000000000000000000394 /* tt.cpp in Sources */,
+				A1F000000000000000000395 /* position.cpp in Sources */,
+				A1F000000000000000000396 /* uci.cpp in Sources */,
+				A1F000000000000000000397 /* EmbeddedUCI.cpp in Sources */,
+				A1F000000000000000000398 /* SFEngine.mm in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1F000000000000000000034 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1F0000000000000000003F0 /* main.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DD96E7276763443588AF00D3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9738C6A9655B42E3B448D0D1 /* SFEngineTestSwiftUIApp.swift in Sources */,
+				6C7ED8640B00457B87420328 /* ContentView.swift in Sources */,
+				EACB132F8DD84607B369B543 /* EngineModel.swift in Sources */,
+				E43DAAD651064B9CAA06BCF2 /* SFEngine+Sendable.swift in Sources */,
+				19B7738511DB458D87349533 /* SFEngineSoakRunner.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		569B033B28A642829ADBB4EC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F00973C5857A4D6DAFF89A5E /* SFEngineCLISoakTestSwiftMain.swift in Sources */,
+				7D29D634FCFE4B0F9EBB273E /* SFEngineSoakRunner.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		37BC351B749E4256905A262A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A1F000000000000000000020 /* SFEngine-iOS */;
+			targetProxy = E9DCEEA881594B108AE9AD98 /* PBXContainerItemProxy */;
+		};
+		9721EC4CE6A1621EDC780B2A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A1F000000000000000000021 /* SFEngine-macOS */;
+			targetProxy = A0B89B547B6E8219C9922259 /* PBXContainerItemProxy */;
+		};
+		2469E3FDA6124893B824848F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A1F000000000000000000021 /* SFEngine-macOS */;
+			targetProxy = 950AAE5C1547462891DD1097 /* PBXContainerItemProxy */;
+		};
+		A1F000000000000000000901 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A1F000000000000000000021 /* SFEngine-macOS */;
+			targetProxy = BB7544DE2EF6E9C9006045C2 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		76B2B04AFB5F488C83B09B8A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = LVYMXM9579;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/Sources/SFEngine";
+				INFOPLIST_FILE = IOSSwiftUI/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lc++",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.stockfish.SFEngineTestSwiftUI;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				SWIFT_OBJC_BRIDGING_HEADER = "IOSSwiftUI/SFEngineTestSwiftUI-Bridging-Header.h";
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		9B52723B055140EC9F6D1D39 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = LVYMXM9579;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/Sources/SFEngine";
+				INFOPLIST_FILE = IOSSwiftUI/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lc++",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.stockfish.SFEngineTestSwiftUI;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				SWIFT_OBJC_BRIDGING_HEADER = "IOSSwiftUI/SFEngineTestSwiftUI-Bridging-Header.h";
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A1F000000000000000000050 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		A1F000000000000000000051 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				ONLY_ACTIVE_ARCH = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		A1F000000000000000000052 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGNING_ALLOWED = NO;
+				ENABLE_BITCODE = NO;
+				GCC_ENABLE_CPP_EXCEPTIONS = NO;
+				GCC_ENABLE_CPP_RTTI = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/Sources/SFEngine",
+					"$(PROJECT_DIR)/ThirdParty/Stockfish/src/**",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				OTHER_CFLAGS = (
+					"$(inherited)",
+					"-Wa,-I$(PROJECT_DIR)/ThirdParty/Stockfish/src",
+					"-Wa,-I$(PROJECT_DIR)/Resources/NNUE",
+				);
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(inherited)",
+					"-fno-exceptions",
+					"-Wa,-I$(PROJECT_DIR)/ThirdParty/Stockfish/src",
+					"-Wa,-I$(PROJECT_DIR)/Resources/NNUE",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A1F000000000000000000053 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGNING_ALLOWED = NO;
+				ENABLE_BITCODE = NO;
+				GCC_ENABLE_CPP_EXCEPTIONS = NO;
+				GCC_ENABLE_CPP_RTTI = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/Sources/SFEngine",
+					"$(PROJECT_DIR)/ThirdParty/Stockfish/src/**",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				OTHER_CFLAGS = (
+					"$(inherited)",
+					"-Wa,-I$(PROJECT_DIR)/ThirdParty/Stockfish/src",
+					"-Wa,-I$(PROJECT_DIR)/Resources/NNUE",
+				);
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(inherited)",
+					"-fno-exceptions",
+					"-Wa,-I$(PROJECT_DIR)/ThirdParty/Stockfish/src",
+					"-Wa,-I$(PROJECT_DIR)/Resources/NNUE",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A1F000000000000000000054 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGNING_ALLOWED = NO;
+				GCC_ENABLE_CPP_EXCEPTIONS = NO;
+				GCC_ENABLE_CPP_RTTI = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/Sources/SFEngine",
+					"$(PROJECT_DIR)/ThirdParty/Stockfish/src/**",
+				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				OTHER_CFLAGS = (
+					"$(inherited)",
+					"-Wa,-I$(PROJECT_DIR)/ThirdParty/Stockfish/src",
+					"-Wa,-I$(PROJECT_DIR)/Resources/NNUE",
+				);
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(inherited)",
+					"-fno-exceptions",
+					"-Wa,-I$(PROJECT_DIR)/ThirdParty/Stockfish/src",
+					"-Wa,-I$(PROJECT_DIR)/Resources/NNUE",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				supportedPlatforms = macosx;
+			};
+			name = Debug;
+		};
+		A1F000000000000000000055 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGNING_ALLOWED = NO;
+				GCC_ENABLE_CPP_EXCEPTIONS = NO;
+				GCC_ENABLE_CPP_RTTI = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/Sources/SFEngine",
+					"$(PROJECT_DIR)/ThirdParty/Stockfish/src/**",
+				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				OTHER_CFLAGS = (
+					"$(inherited)",
+					"-Wa,-I$(PROJECT_DIR)/ThirdParty/Stockfish/src",
+					"-Wa,-I$(PROJECT_DIR)/Resources/NNUE",
+				);
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(inherited)",
+					"-fno-exceptions",
+					"-Wa,-I$(PROJECT_DIR)/ThirdParty/Stockfish/src",
+					"-Wa,-I$(PROJECT_DIR)/Resources/NNUE",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				supportedPlatforms = macosx;
+			};
+			name = Release;
+		};
+		A1F000000000000000000056 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				GCC_ENABLE_CPP_EXCEPTIONS = NO;
+				GCC_ENABLE_CPP_RTTI = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/Sources/SFEngine",
+					"$(PROJECT_DIR)/ThirdParty/Stockfish/src/**",
+				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				OTHER_CFLAGS = (
+					"$(inherited)",
+					"-Wa,-I$(PROJECT_DIR)/ThirdParty/Stockfish/src",
+					"-Wa,-I$(PROJECT_DIR)/Resources/NNUE",
+				);
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(inherited)",
+					"-fno-exceptions",
+					"-Wa,-I$(PROJECT_DIR)/ThirdParty/Stockfish/src",
+					"-Wa,-I$(PROJECT_DIR)/Resources/NNUE",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lc++",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		A1F000000000000000000057 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				GCC_ENABLE_CPP_EXCEPTIONS = NO;
+				GCC_ENABLE_CPP_RTTI = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/Sources/SFEngine",
+					"$(PROJECT_DIR)/ThirdParty/Stockfish/src/**",
+				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				OTHER_CFLAGS = (
+					"$(inherited)",
+					"-Wa,-I$(PROJECT_DIR)/ThirdParty/Stockfish/src",
+					"-Wa,-I$(PROJECT_DIR)/Resources/NNUE",
+				);
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(inherited)",
+					"-fno-exceptions",
+					"-Wa,-I$(PROJECT_DIR)/ThirdParty/Stockfish/src",
+					"-Wa,-I$(PROJECT_DIR)/Resources/NNUE",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lc++",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		A282D515D3E077B5138E6639 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				GCC_ENABLE_CPP_EXCEPTIONS = NO;
+				GCC_ENABLE_CPP_RTTI = NO;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/Sources/SFEngine";
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lc++",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "Sources/CLISwift/SFEngineCLITestSwift-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		B91B904D164AA71098962A20 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				GCC_ENABLE_CPP_EXCEPTIONS = NO;
+				GCC_ENABLE_CPP_RTTI = NO;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/Sources/SFEngine";
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lc++",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "Sources/CLISwift/SFEngineCLITestSwift-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		5BE035E50C3943CB86323892 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				GCC_ENABLE_CPP_EXCEPTIONS = NO;
+				GCC_ENABLE_CPP_RTTI = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/Sources/SFEngine",
+				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lc++",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "Sources/CLISoakSwift/SFEngineCLISoakTestSwift-Bridging-Header.h";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		C5DA8306ECE24B3985B90C93 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				GCC_ENABLE_CPP_EXCEPTIONS = NO;
+				GCC_ENABLE_CPP_RTTI = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/Sources/SFEngine",
+				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lc++",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "Sources/CLISoakSwift/SFEngineCLISoakTestSwift-Bridging-Header.h";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A1F000000000000000000040 /* Build configuration list for PBXProject "StockfishEmbedded" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1F000000000000000000050 /* Debug */,
+				A1F000000000000000000051 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1F000000000000000000041 /* Build configuration list for PBXNativeTarget "SFEngine-iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1F000000000000000000052 /* Debug */,
+				A1F000000000000000000053 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1F000000000000000000042 /* Build configuration list for PBXNativeTarget "SFEngine-macOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1F000000000000000000054 /* Debug */,
+				A1F000000000000000000055 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1F000000000000000000043 /* Build configuration list for PBXNativeTarget "SFEngineCLITestObjC" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1F000000000000000000056 /* Debug */,
+				A1F000000000000000000057 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C6217AAA81AFECDCEEC87DC8 /* Build configuration list for PBXNativeTarget "SFEngineCLITestSwift" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A282D515D3E077B5138E6639 /* Debug */,
+				B91B904D164AA71098962A20 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8FCE500D4BF04EB49134AB45 /* Build configuration list for PBXNativeTarget "SFEngineCLISoakTestSwift" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5BE035E50C3943CB86323892 /* Debug */,
+				C5DA8306ECE24B3985B90C93 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D65338C95375469F98014D46 /* Build configuration list for PBXNativeTarget "SFEngineTestSwiftUI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				76B2B04AFB5F488C83B09B8A /* Debug */,
+				9B52723B055140EC9F6D1D39 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		F09AE2666C2E4DD788F4AA44 /* XCRemoteSwiftPackageReference "swift-argument-parser" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-argument-parser";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.3.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		7425DBD7201F406F91FA976F /* ArgumentParser */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F09AE2666C2E4DD788F4AA44 /* XCRemoteSwiftPackageReference "swift-argument-parser" */;
+			productName = ArgumentParser;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = A1F000000000000000000001 /* Project object */;
+}

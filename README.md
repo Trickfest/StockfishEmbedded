@@ -15,7 +15,7 @@ git clone <repo-url>
 - `Sources/SFEngineSoak` – shared soak test runner used by the CLI (and included in the SwiftUI target for future use).
 - `Sources/CLISoakSwift` – macOS Swift CLI soak test.
 - `IOSSwiftUI` – iOS/iPadOS SwiftUI smoke test app (iOS 26+).
-- `ThirdParty/Stockfish` – vendored Stockfish source (tracked via git subtree).
+- `ThirdParty/Stockfish` – vendored Stockfish source (snapshot tracked via git subtree).
 - `Resources/NNUE` – NNUE networks referenced by the build (net files not tracked in repo - see below).
 - `Resources/Soak` – default FEN position files for soak tests.
 
@@ -93,7 +93,7 @@ Stockfish changes.
 
 Highlights:
 - Upstream Stockfish sources are untouched; the wrapper lives in `Sources/SFEngine`.
-- Stockfish is vendored via git subtree, so updates are explicit and reviewable.
+- Stockfish is vendored via git subtree; updates are explicit and squashed to keep history small.
 - NNUE networks are embedded into the static library at build time (once downloaded) for out-of-the-box `go` searches.
 - Stream redirection is scoped to the shim instead of global source edits.
 - The API surface is small and Swift-friendly (thread-safe command queue + line callback).
@@ -109,16 +109,17 @@ Highlights:
 - Bitcode is disabled for iOS builds.
 
 ## Stockfish versioning
-Stockfish sources are vendored in `ThirdParty/Stockfish` via `git subtree` and track the official `master` branch. Updates are manual; clones always include the exact snapshot committed here.
+Stockfish sources are vendored in `ThirdParty/Stockfish` via `git subtree` as a snapshot (history is not kept). Updates are manual; clones always include the exact snapshot committed here.
 
 Key points:
 - Updates are explicit and reviewable; there is no submodule.
-- Updating Stockfish is a single subtree pull from upstream.
+- Updating Stockfish is a single, squashed subtree pull from upstream.
+- The upstream commit hash is recorded in the subtree metadata lines in the update commit message.
 - If Stockfish changes the default NNUE filenames, revisit the NNUE section above and download the matching nets.
   You can confirm the required filenames in `ThirdParty/Stockfish/src/evaluate.h` (`EvalFileDefaultNameBig` / `EvalFileDefaultNameSmall`).
 - Warning: Updating Stockfish (to `master` or a release tag) can break the parent repo's shim or build setup due to upstream API or initialization changes. If a build fails after an update, you may need to adjust the wrapper code in `Sources/SFEngine` to match the new Stockfish expectations.
-- Typical update workflow: pull the subtree from upstream, check if the NNUE filenames changed, download any new nets, then build the CLI/SwiftUI smoke tests. If you see build errors in `Sources/SFEngine`, update the shim to match Stockfish's current initialization path.
-- Even if the project successfully compiles, compare the current Stockfish `main.cpp` initialization sequence with the shim in `Sources/SFEngine/EmbeddedUCI.cpp` to catch new init steps that could affect runtime behavior.
+- Typical update workflow: fetch upstream, pull the subtree with `--squash`, check if the NNUE filenames changed, download any new nets, then build the CLI/SwiftUI smoke tests. If you see build errors in `Sources/SFEngine`, update the shim to match Stockfish's current initialization path.
+- Even if the project successfully compiles, compare the current Stockfish `main.cpp` initialization sequence with the shim in `Sources/SFEngine/EmbeddedUCI.cpp` to catch new (or deleted) init steps that could affect runtime behavior.
 
 To see the most recent subtree update commit (and upstream SHA):
 ```
@@ -127,12 +128,12 @@ git log -1 --pretty=%B -- ThirdParty/Stockfish
 
 To pin to an official release tag (example: `sf_17.1`):
 ```
-git subtree pull --prefix ThirdParty/Stockfish https://github.com/official-stockfish/Stockfish.git sf_17.1
+git subtree pull --prefix ThirdParty/Stockfish https://github.com/official-stockfish/Stockfish.git sf_17.1 --squash
 ```
 
 To update to the latest commit on `master`:
 ```
-git subtree pull --prefix ThirdParty/Stockfish https://github.com/official-stockfish/Stockfish.git master
+git subtree pull --prefix ThirdParty/Stockfish https://github.com/official-stockfish/Stockfish.git master --squash
 ```
 
 ## License

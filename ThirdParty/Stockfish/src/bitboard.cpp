@@ -1,6 +1,6 @@
 /*
   Stockfish, a UCI chess playing engine derived from Glaurung 2.1
-  Copyright (C) 2004-2025 The Stockfish developers (see AUTHORS file)
+  Copyright (C) 2004-2026 The Stockfish developers (see AUTHORS file)
 
   Stockfish is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -49,12 +49,15 @@ std::string Bitboards::pretty(Bitboard b) {
 
     std::string s = "+---+---+---+---+---+---+---+---+\n";
 
-    for (Rank r = RANK_8; r >= RANK_1; --r)
+    for (Rank r = RANK_8;; --r)
     {
         for (File f = FILE_A; f <= FILE_H; ++f)
             s += b & make_square(f, r) ? "| X " : "|   ";
 
         s += "| " + std::to_string(1 + r) + "\n+---+---+---+---+---+---+---+---+\n";
+
+        if (r == RANK_1)
+            break;
     }
     s += "  a   b   c   d   e   f   g   h\n";
 

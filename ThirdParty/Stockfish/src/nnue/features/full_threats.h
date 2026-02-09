@@ -1,6 +1,6 @@
 /*
   Stockfish, a UCI chess playing engine derived from Glaurung 2.1
-  Copyright (C) 2004-2025 The Stockfish developers (see AUTHORS file)
+  Copyright (C) 2004-2026 The Stockfish developers (see AUTHORS file)
   Stockfish is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
@@ -30,8 +30,8 @@ class Position;
 
 namespace Stockfish::Eval::NNUE::Features {
 
-static constexpr int numValidTargets[PIECE_NB] = {0, 6, 12, 10, 10, 12, 8, 0,
-                                                  0, 6, 12, 10, 10, 12, 8, 0};
+static constexpr int numValidTargets[PIECE_NB] = {0, 6, 10, 8, 8, 10, 8, 0,
+                                                  0, 6, 10, 8, 8, 10, 8, 0};
 
 class FullThreats {
    public:
@@ -42,7 +42,7 @@ class FullThreats {
     static constexpr std::uint32_t HashValue = 0x8f234cb8u;
 
     // Number of feature dimensions
-    static constexpr IndexType Dimensions = 79856;
+    static constexpr IndexType Dimensions = 66864;
 
     // clang-format off
     // Orient a square according to perspective (rotates by 180 for black)
@@ -59,10 +59,10 @@ class FullThreats {
 
     static constexpr int map[PIECE_TYPE_NB-2][PIECE_TYPE_NB-2] = {
       {0,  1, -1,  2, -1, -1},
-      {0,  1,  2,  3,  4,  5},
-      {0,  1,  2,  3, -1,  4},
-      {0,  1,  2,  3, -1,  4},
-      {0,  1,  2,  3,  4,  5},
+      {0,  1,  2,  3,  4, -1},
+      {0,  1,  2,  3, -1, -1},
+      {0,  1,  2,  3, -1, -1},
+      {0,  1,  2,  3,  4, -1},
       {0,  1,  2,  3, -1, -1}
     };
     // clang-format on

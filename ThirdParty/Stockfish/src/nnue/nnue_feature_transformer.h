@@ -1,6 +1,6 @@
 /*
   Stockfish, a UCI chess playing engine derived from Glaurung 2.1
-  Copyright (C) 2004-2025 The Stockfish developers (see AUTHORS file)
+  Copyright (C) 2004-2026 The Stockfish developers (see AUTHORS file)
 
   Stockfish is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -132,7 +132,7 @@ class FeatureTransformer {
         permute<16>(biases, PackusEpi16Order);
         permute<16>(weights, PackusEpi16Order);
 
-        if (UseThreats)
+        if constexpr (UseThreats)
             permute<8>(threatWeights, PackusEpi16Order);
     }
 
@@ -140,57 +140,38 @@ class FeatureTransformer {
         permute<16>(biases, InversePackusEpi16Order);
         permute<16>(weights, InversePackusEpi16Order);
 
-        if (UseThreats)
+        if constexpr (UseThreats)
             permute<8>(threatWeights, InversePackusEpi16Order);
     }
 
     inline void scale_weights(bool read) {
-        for (IndexType j = 0; j < InputDimensions; ++j)
-        {
-            WeightType* w = &weights[j * HalfDimensions];
-            for (IndexType i = 0; i < HalfDimensions; ++i)
-                w[i] = read ? w[i] * 2 : w[i] / 2;
-        }
-
-        for (IndexType i = 0; i < HalfDimensions; ++i)
-            biases[i] = read ? biases[i] * 2 : biases[i] / 2;
+        for (auto& w : weights)
+            w = read ? w * 2 : w / 2;
+        for (auto& b : biases)
+            b = read ? b * 2 : b / 2;
     }
 
     // Read network parameters
-    // TODO: This is ugly. Currently LEB128 on the entire L1 necessitates
-    // reading the weights into a combined array, and then splitting.
     bool read_parameters(std::istream& stream) {
-        read_leb_128<BiasType>(stream, biases);
+        read_leb_128(stream, biases);
 
-        if (UseThreats)
+        if constexpr (UseThreats)
         {
             read_little_endian<ThreatWeightType>(stream, threatWeights.data(),
                                                  ThreatInputDimensions * HalfDimensions);
-            read_leb_128<WeightType>(stream, weights);
+            read_leb_128(stream, weights);
 
-            auto combinedPsqtWeights =
-              std::make_unique<std::array<PSQTWeightType, TotalInputDimensions * PSQTBuckets>>();
-
-            read_leb_128<PSQTWeightType>(stream, *combinedPsqtWeights);
-
-            std::copy(combinedPsqtWeights->begin(),
-                      combinedPsqtWeights->begin() + ThreatInputDimensions * PSQTBuckets,
-                      std::begin(threatPsqtWeights));
-
-            std::copy(combinedPsqtWeights->begin() + ThreatInputDimensions * PSQTBuckets,
-                      combinedPsqtWeights->begin()
-                        + (ThreatInputDimensions + InputDimensions) * PSQTBuckets,
-                      std::begin(psqtWeights));
+            read_leb_128(stream, threatPsqtWeights, psqtWeights);
         }
         else
         {
-            read_leb_128<WeightType>(stream, weights);
-            read_leb_128<PSQTWeightType>(stream, psqtWeights);
+            read_leb_128(stream, weights);
+            read_leb_128(stream, psqtWeights);
         }
 
         permute_weights();
 
-        if (!UseThreats)
+        if constexpr (!UseThreats)
             scale_weights(true);
 
         return !stream.fail();
@@ -202,12 +183,12 @@ class FeatureTransformer {
 
         copy->unpermute_weights();
 
-        if (!UseThreats)
+        if constexpr (!UseThreats)
             copy->scale_weights(false);
 
         write_leb_128<BiasType>(stream, copy->biases);
 
-        if (UseThreats)
+        if constexpr (UseThreats)
         {
             write_little_endian<ThreatWeightType>(stream, copy->threatWeights.data(),
                                                   ThreatInputDimensions * HalfDimensions);
@@ -237,10 +218,19 @@ class FeatureTransformer {
 
     std::size_t get_content_hash() const {
         std::size_t h = 0;
+
         hash_combine(h, get_raw_data_hash(biases));
         hash_combine(h, get_raw_data_hash(weights));
         hash_combine(h, get_raw_data_hash(psqtWeights));
+
+        if constexpr (UseThreats)
+        {
+            hash_combine(h, get_raw_data_hash(threatWeights));
+            hash_combine(h, get_raw_data_hash(threatPsqtWeights));
+        }
+
         hash_combine(h, get_hash_value());
+
         return h;
     }
 
@@ -261,7 +251,7 @@ class FeatureTransformer {
         auto        psqt =
           (psqtAccumulation[perspectives[0]][bucket] - psqtAccumulation[perspectives[1]][bucket]);
 
-        if (UseThreats)
+        if constexpr (UseThreats)
         {
             const auto& threatPsqtAccumulation =
               (threatAccumulatorState.acc<HalfDimensions>()).psqtAccumulation;
@@ -353,7 +343,7 @@ class FeatureTransformer {
     #else
               6;
     #endif
-            if (UseThreats)
+            if constexpr (UseThreats)
             {
                 const vec_t* tin0 =
                   reinterpret_cast<const vec_t*>(&(threatAccumulation[perspectives[p]][0]));
@@ -405,7 +395,7 @@ class FeatureTransformer {
                 BiasType sum1 =
                   accumulation[static_cast<int>(perspectives[p])][j + HalfDimensions / 2];
 
-                if (UseThreats)
+                if constexpr (UseThreats)
                 {
                     BiasType sum0t = threatAccumulation[static_cast<int>(perspectives[p])][j + 0];
                     BiasType sum1t =

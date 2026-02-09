@@ -15,7 +15,7 @@ wrapped by a small Objective-C API (`SFEngine`) that is safe to call from Swift.
 NNUE weights are not in Git. Download both nets before building:
 ```
 mkdir -p Resources/NNUE
-curl -L --fail https://tests.stockfishchess.org/api/nn/nn-c288c895ea92.nnue -o Resources/NNUE/nn-c288c895ea92.nnue
+curl -L --fail https://tests.stockfishchess.org/api/nn/nn-3dd094f3dfcf.nnue -o Resources/NNUE/nn-3dd094f3dfcf.nnue
 curl -L --fail https://tests.stockfishchess.org/api/nn/nn-37f18f62d772.nnue -o Resources/NNUE/nn-37f18f62d772.nnue
 ```
 

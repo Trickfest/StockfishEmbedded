@@ -1,6 +1,47 @@
 import Foundation
 
-final class SFEngineHarness {
+actor SFLineMailbox {
+    private var buffered: [String] = []
+    private var waiters: [(UUID, CheckedContinuation<String?, Never>)] = []
+
+    func append(_ line: String) {
+        if !waiters.isEmpty {
+            let (_, continuation) = waiters.removeFirst()
+            continuation.resume(returning: line)
+            return
+        }
+
+        buffered.append(line)
+    }
+
+    func nextLine() async -> String? {
+        if !buffered.isEmpty {
+            return buffered.removeFirst()
+        }
+
+        let token = UUID()
+        return await withTaskCancellationHandler {
+            await withCheckedContinuation { continuation in
+                waiters.append((token, continuation))
+            }
+        } onCancel: {
+            Task {
+                await self.cancelWaiter(token: token)
+            }
+        }
+    }
+
+    private func cancelWaiter(token: UUID) {
+        guard let index = waiters.firstIndex(where: { $0.0 == token }) else {
+            return
+        }
+
+        let (_, continuation) = waiters.remove(at: index)
+        continuation.resume(returning: nil)
+    }
+}
+
+final class SFEngineHarness: @unchecked Sendable {
     enum Score: Equatable {
         case cp(Int)
         case mate(Int)
@@ -27,13 +68,17 @@ final class SFEngineHarness {
     }
 
     private var engine: SFEngine?
-    private let lock = NSLock()
-    private var lines: [String] = []
-    private let lineSignal = DispatchSemaphore(value: 0)
+    private let lineMailbox = SFLineMailbox()
 
     init() {
         engine = SFEngine { [weak self] line in
-            self?.append(line)
+            guard let self else {
+                return
+            }
+
+            Task {
+                await self.lineMailbox.append(line)
+            }
         }
     }
 
@@ -41,12 +86,11 @@ final class SFEngineHarness {
         engine?.stop()
     }
 
-    func startAndBootstrap(timeout: TimeInterval = 10.0) throws -> Int {
+    func startAndBootstrap(timeout: TimeInterval = 10.0) async throws {
         engine?.start()
 
-        var cursor = 0
         send("uci")
-        guard waitForLine(after: &cursor, timeout: timeout, matching: { $0 == "uciok" }) != nil else {
+        guard await waitForLine(timeout: timeout, matching: { $0 == "uciok" }) != nil else {
             throw HarnessError.timedOutWaitingForUCI
         }
 
@@ -58,11 +102,9 @@ final class SFEngineHarness {
         send("setoption name Clear Hash")
 
         send("isready")
-        guard waitForLine(after: &cursor, timeout: timeout, matching: { $0 == "readyok" }) != nil else {
+        guard await waitForLine(timeout: timeout, matching: { $0 == "readyok" }) != nil else {
             throw HarnessError.timedOutWaitingForReady
         }
-
-        return cursor
     }
 
     func stop() {
@@ -75,32 +117,25 @@ final class SFEngineHarness {
 
     @discardableResult
     func waitForLine(
-        after cursor: inout Int,
         timeout: TimeInterval,
         collecting collector: ((String) -> Void)? = nil,
         matching predicate: (String) -> Bool
-    ) -> String? {
+    ) async -> String? {
         let deadline = Date().addingTimeInterval(timeout)
 
         while true {
-            let pendingLines = consumePending(after: &cursor)
-            if !pendingLines.isEmpty {
-                for line in pendingLines {
-                    collector?(line)
-                    if predicate(line) {
-                        return line
-                    }
-                }
-            }
-
             let remaining = deadline.timeIntervalSinceNow
             if remaining <= 0 {
                 return nil
             }
 
-            let waitResult = lineSignal.wait(timeout: .now() + remaining)
-            if waitResult == .timedOut {
+            guard let line = await nextLine(timeout: remaining) else {
                 return nil
+            }
+
+            collector?(line)
+            if predicate(line) {
+                return line
             }
         }
     }
@@ -108,15 +143,13 @@ final class SFEngineHarness {
     func runSearch(
         positionCommand: String,
         goCommand: String,
-        timeout: TimeInterval,
-        cursor: inout Int
-    ) -> SearchResult? {
+        timeout: TimeInterval
+    ) async -> SearchResult? {
         send(positionCommand)
         send(goCommand)
 
         var transcript: [String] = []
-        guard let bestmoveLine = waitForLine(
-            after: &cursor,
+        guard let bestmoveLine = await waitForLine(
             timeout: timeout,
             collecting: { transcript.append($0) },
             matching: { $0.hasPrefix("bestmove ") }
@@ -138,14 +171,12 @@ final class SFEngineHarness {
     func runPerft(
         positionCommand: String,
         depth: Int,
-        timeout: TimeInterval,
-        cursor: inout Int
-    ) -> Int? {
+        timeout: TimeInterval
+    ) async -> Int? {
         send(positionCommand)
         send("go perft \(depth)")
 
-        guard let nodesLine = waitForLine(
-            after: &cursor,
+        guard let nodesLine = await waitForLine(
             timeout: timeout,
             matching: { $0.hasPrefix("Nodes searched:") }
         ) else {
@@ -154,7 +185,7 @@ final class SFEngineHarness {
 
         // Drain any remaining output before the next command sequence.
         send("isready")
-        _ = waitForLine(after: &cursor, timeout: timeout, matching: { $0 == "readyok" })
+        _ = await waitForLine(timeout: timeout, matching: { $0 == "readyok" })
 
         return Self.parseNodesSearched(nodesLine)
     }
@@ -201,23 +232,25 @@ final class SFEngineHarness {
         return nil
     }
 
-    private func append(_ line: String) {
-        lock.lock()
-        lines.append(line)
-        lock.unlock()
-        lineSignal.signal()
-    }
-
-    private func consumePending(after cursor: inout Int) -> [String] {
-        lock.lock()
-        defer { lock.unlock() }
-
-        guard cursor < lines.count else {
-            return []
+    private func nextLine(timeout: TimeInterval) async -> String? {
+        let clampedTimeout = max(0, timeout)
+        if clampedTimeout == 0 {
+            return nil
         }
 
-        let pending = Array(lines[cursor...])
-        cursor = lines.count
-        return pending
+        let timeoutNanoseconds = UInt64(clampedTimeout * 1_000_000_000)
+        return await withTaskGroup(of: String?.self) { group in
+            group.addTask {
+                await self.lineMailbox.nextLine()
+            }
+            group.addTask {
+                try? await Task.sleep(nanoseconds: timeoutNanoseconds)
+                return nil
+            }
+
+            let result = await group.next() ?? nil
+            group.cancelAll()
+            return result
+        }
     }
 }

@@ -6,7 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 ### Added
-- Added `SFEngineTests` XCTest harness with initial coverage for wrapper contracts, perft node counts, tactical checks, and score-band assertions.
+- Added `SFEngineTests` XCTest harness with baseline coverage for wrapper contracts, perft node counts, tactical checks, and score-band assertions.
+- Expanded `SFEngineTests` coverage with additional contract checks, perft positions, score-band cases, and a larger data-driven tactical mate-in-one regression set.
+
+### Changed
+- Refactored the `SFEngineTests` harness and tests to async/await, replacing semaphore-based waits and cursor polling with an async line mailbox and async XCTest expectations.
 
 ## [1.1.0] - 2026-02-09
 ### Changed

@@ -35,35 +35,33 @@ final class SFEngineTests: XCTestCase {
     )
 
     private var harness: SFEngineHarness!
-    private var cursor: Int = 0
 
-    override func setUpWithError() throws {
-        try super.setUpWithError()
+    override func setUp() async throws {
+        try await super.setUp()
         harness = SFEngineHarness()
-        cursor = try harness.startAndBootstrap(timeout: 10.0)
+        try await harness.startAndBootstrap(timeout: 10.0)
     }
 
-    override func tearDownWithError() throws {
+    override func tearDown() async throws {
         harness?.stop()
         harness = nil
-        try super.tearDownWithError()
+        try await super.tearDown()
     }
 
     // Step 1: wrapper contract tests.
 
-    func testContractReadyProbeReturnsReadyOK() {
+    func testContractReadyProbeReturnsReadyOK() async {
         harness.send("isready")
 
-        let line = harness.waitForLine(after: &cursor, timeout: 5.0, matching: { $0 == "readyok" })
+        let line = await harness.waitForLine(timeout: 5.0, matching: { $0 == "readyok" })
         XCTAssertEqual(line, "readyok")
     }
 
-    func testContractBestmoveHasValidUCISyntax() {
-        guard let result = harness.runSearch(
+    func testContractBestmoveHasValidUCISyntax() async {
+        guard let result = await harness.runSearch(
             positionCommand: "position startpos",
             goCommand: "go movetime 250",
-            timeout: 10.0,
-            cursor: &cursor
+            timeout: 10.0
         ) else {
             XCTFail("Expected bestmove within timeout")
             return
@@ -81,11 +79,13 @@ final class SFEngineTests: XCTestCase {
         engine.stop()
     }
 
-    func testContractSendCommandBeforeStartIsIgnoredSafely() {
-        let uciok = DispatchSemaphore(value: 0)
+    func testContractSendCommandBeforeStartIsIgnoredSafely() async {
+        let uciok = expectation(description: "uciok")
         let engine = SFEngine(lineHandler: { line in
             if line == "uciok" {
-                uciok.signal()
+                Task { @MainActor in
+                    uciok.fulfill()
+                }
             }
         })
 
@@ -96,8 +96,7 @@ final class SFEngineTests: XCTestCase {
 
         engine.start()
         engine.sendCommand("uci")
-        let waitResult = uciok.wait(timeout: .now() + .seconds(5))
-        XCTAssertEqual(waitResult, .success, "Expected uciok after start")
+        await fulfillment(of: [uciok], timeout: 5.0)
         engine.stop()
     }
 
@@ -108,35 +107,45 @@ final class SFEngineTests: XCTestCase {
         harness.send("go depth 12")
     }
 
-    func testContractRepeatedReadyProbesReturnReadyOKEachTime() {
+    func testContractRepeatedReadyProbesReturnReadyOKEachTime() async {
         for attempt in 1...3 {
             harness.send("isready")
-            let line = harness.waitForLine(after: &cursor, timeout: 5.0, matching: { $0 == "readyok" })
+            let line = await harness.waitForLine(timeout: 5.0, matching: { $0 == "readyok" })
             XCTAssertEqual(line, "readyok", "Expected readyok for attempt \(attempt)")
         }
     }
 
-    func testContractUCICommandCanBeIssuedAgain() {
+    func testContractUCICommandCanBeIssuedAgain() async {
         harness.send("uci")
-        let uciok = harness.waitForLine(after: &cursor, timeout: 10.0, matching: { $0 == "uciok" })
+        let uciok = await harness.waitForLine(timeout: 10.0, matching: { $0 == "uciok" })
         XCTAssertEqual(uciok, "uciok")
 
         harness.send("isready")
-        let readyok = harness.waitForLine(after: &cursor, timeout: 5.0, matching: { $0 == "readyok" })
+        let readyok = await harness.waitForLine(timeout: 5.0, matching: { $0 == "readyok" })
         XCTAssertEqual(readyok, "readyok")
     }
 
-    func testContractConcurrentCommandEnqueueDoesNotDeadlock() {
-        DispatchQueue.concurrentPerform(iterations: 200) { _ in
-            harness.send("setoption name Hash value 16")
+    func testContractConcurrentCommandEnqueueDoesNotDeadlock() async {
+        let enqueueComplete = expectation(description: "concurrent_setoption_enqueued")
+        enqueueComplete.expectedFulfillmentCount = 200
+        let localHarness = harness!
+
+        for _ in 0..<200 {
+            Thread.detachNewThread {
+                localHarness.send("setoption name Hash value 16")
+                Task { @MainActor in
+                    enqueueComplete.fulfill()
+                }
+            }
         }
+        await fulfillment(of: [enqueueComplete], timeout: 10.0)
 
         harness.send("isready")
-        let readyok = harness.waitForLine(after: &cursor, timeout: 10.0, matching: { $0 == "readyok" })
+        let readyok = await harness.waitForLine(timeout: 10.0, matching: { $0 == "readyok" })
         XCTAssertEqual(readyok, "readyok")
     }
 
-    func testContractBackToBackSearchesProduceBestmoves() {
+    func testContractBackToBackSearchesProduceBestmoves() async {
         let searches = [
             ("position startpos", "go depth 6"),
             ("position startpos moves e2e4", "go depth 6"),
@@ -144,11 +153,10 @@ final class SFEngineTests: XCTestCase {
         ]
 
         for (index, search) in searches.enumerated() {
-            guard let result = harness.runSearch(
+            guard let result = await harness.runSearch(
                 positionCommand: search.0,
                 goCommand: search.1,
-                timeout: 15.0,
-                cursor: &cursor
+                timeout: 15.0
             ) else {
                 XCTFail("Expected bestmove for search \(index + 1)")
                 return
@@ -161,12 +169,11 @@ final class SFEngineTests: XCTestCase {
         }
     }
 
-    func testContractStopDuringLongSearchReturnsPromptly() {
+    func testContractStopDuringLongSearchReturnsPromptly() async {
         let localHarness = SFEngineHarness()
-        var localCursor = 0
 
         do {
-            localCursor = try localHarness.startAndBootstrap(timeout: 10.0)
+            try await localHarness.startAndBootstrap(timeout: 10.0)
         } catch {
             XCTFail("Failed to bootstrap local harness: \(error)")
             return
@@ -176,21 +183,17 @@ final class SFEngineTests: XCTestCase {
         localHarness.send("go depth 40")
 
         // Give the search a brief head start, then stop.
-        Thread.sleep(forTimeInterval: 0.1)
+        try? await Task.sleep(nanoseconds: 100_000_000)
         let start = Date()
         localHarness.stop()
         let elapsed = Date().timeIntervalSince(start)
 
         XCTAssertLessThan(elapsed, 3.0, "Stop took too long: \(elapsed)s")
-
-        // Cursor remains intentionally unused, but keeping it avoids accidental
-        // compiler optimization stripping the setup in release test runs.
-        XCTAssertGreaterThanOrEqual(localCursor, 0)
     }
 
     // Step 2: perft correctness tests.
 
-    func testPerftRegressionSuiteCoversCanonicalPositions() {
+    func testPerftRegressionSuiteCoversCanonicalPositions() async {
         let cases: [PerftCase] = [
             PerftCase(name: "startpos_d2", positionCommand: "position startpos", depth: 2, expectedNodes: 400),
             PerftCase(name: "startpos_d3", positionCommand: "position startpos", depth: 3, expectedNodes: 8902),
@@ -265,11 +268,10 @@ final class SFEngineTests: XCTestCase {
         ]
 
         for testCase in cases {
-            guard let nodes = harness.runPerft(
+            guard let nodes = await harness.runPerft(
                 positionCommand: testCase.positionCommand,
                 depth: testCase.depth,
-                timeout: 60.0,
-                cursor: &cursor
+                timeout: 60.0
             ) else {
                 XCTFail("No perft result for \(testCase.name)")
                 return
@@ -285,7 +287,7 @@ final class SFEngineTests: XCTestCase {
 
     // Step 3: tactical tests (mate signal + allowed move set).
 
-    func testTacticalMateInOneRegressionSuite() {
+    func testTacticalMateInOneRegressionSuite() async {
         let cases: [TacticalCase] = [
             TacticalCase(
                 name: "kqk_f6_h8_qa7",
@@ -602,11 +604,10 @@ final class SFEngineTests: XCTestCase {
         ]
 
         for testCase in cases {
-            guard let result = harness.runSearch(
+            guard let result = await harness.runSearch(
                 positionCommand: testCase.positionCommand,
                 goCommand: testCase.goCommand,
-                timeout: 10.0,
-                cursor: &cursor
+                timeout: 10.0
             ) else {
                 XCTFail("Expected search result for \(testCase.name)")
                 return
@@ -633,12 +634,11 @@ final class SFEngineTests: XCTestCase {
         }
     }
 
-    func testTacticalHangingQueenMoveInAllowedSet() {
-        guard let result = harness.runSearch(
+    func testTacticalHangingQueenMoveInAllowedSet() async {
+        guard let result = await harness.runSearch(
             positionCommand: "position fen 4k3/8/8/8/4q3/8/4Q3/4K3 w - - 0 1",
             goCommand: "go depth 6",
-            timeout: 10.0,
-            cursor: &cursor
+            timeout: 10.0
         ) else {
             XCTFail("Expected search result")
             return
@@ -653,7 +653,7 @@ final class SFEngineTests: XCTestCase {
 
     // Step 4: score-band tests.
 
-    func testScoreBandRegressionSuite() {
+    func testScoreBandRegressionSuite() async {
         let cases: [ScoreCase] = [
             ScoreCase(
                 name: "white_to_move_white_up_queen",
@@ -730,11 +730,10 @@ final class SFEngineTests: XCTestCase {
         ]
 
         for testCase in cases {
-            guard let result = harness.runSearch(
+            guard let result = await harness.runSearch(
                 positionCommand: testCase.positionCommand,
                 goCommand: testCase.goCommand,
-                timeout: 20.0,
-                cursor: &cursor
+                timeout: 20.0
             ) else {
                 XCTFail("Expected search result for \(testCase.name)")
                 return

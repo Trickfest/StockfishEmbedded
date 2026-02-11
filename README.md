@@ -14,6 +14,7 @@ git clone <repo-url>
 - `Sources/CLISwift` – minimal macOS Swift CLI smoke test.
 - `Sources/SFEngineSoak` – shared soak test runner used by the CLI (and included in the SwiftUI target for future use).
 - `Sources/CLISoakSwift` – macOS Swift CLI soak test.
+- `Tests/SFEngineTests` – XCTest harness with contract, perft, tactical, and score-band assertions.
 - `IOSSwiftUI` – iOS/iPadOS SwiftUI smoke test app (iOS 26+).
 - `ThirdParty/Stockfish` – vendored Stockfish source (snapshot tracked via git subtree).
 - `Resources/NNUE` – NNUE networks referenced by the build (net files not tracked in repo - see below).
@@ -56,6 +57,9 @@ xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineCLITestSwift -co
 # macOS CLI soak test (Swift, short run)
 xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineCLISoakTestSwift -configuration Debug -destination 'platform=macOS,arch=arm64' -derivedDataPath build
 ./build/Build/Products/Debug/SFEngineCLISoakTestSwift --iterations 5 --movetime 500
+
+# macOS XCTest harness
+xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineTests -configuration Debug -destination 'platform=macOS,arch=arm64' -derivedDataPath build test
 
 # iOS/iPadOS SwiftUI smoke test (build only)
 xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineTestSwiftUI -configuration Debug -destination 'generic/platform=iOS' -derivedDataPath build

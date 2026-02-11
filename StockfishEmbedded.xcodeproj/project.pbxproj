@@ -14,6 +14,10 @@
 		6C7ED8640B00457B87420328 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F63EEF49C294F2190977114 /* ContentView.swift */; };
 		7D29D634FCFE4B0F9EBB273E /* SFEngineSoakRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C19554DECD4A4E45AFC973E9 /* SFEngineSoakRunner.swift */; };
 		9738C6A9655B42E3B448D0D1 /* SFEngineTestSwiftUIApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38A8B7907A3D417A9D55BDAC /* SFEngineTestSwiftUIApp.swift */; };
+		B10000000000000000000101 /* SFEngineHarness.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000301 /* SFEngineHarness.swift */; };
+		B10000000000000000000102 /* SFEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000302 /* SFEngineTests.swift */; };
+		B10000000000000000000103 /* libSFEngine-macOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000011 /* libSFEngine-macOS.a */; };
+		B10000000000000000000104 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B10000000000000000000305 /* XCTest.framework */; };
 		A1F000000000000000000300 /* memory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000200 /* memory.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		A1F000000000000000000301 /* thread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000201 /* thread.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		A1F000000000000000000302 /* timeman.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000202 /* timeman.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
@@ -90,6 +94,13 @@
 			remoteGlobalIDString = A1F000000000000000000021;
 			remoteInfo = "SFEngine-macOS";
 		};
+		B10000000000000000000201 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1F000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1F000000000000000000021;
+			remoteInfo = "SFEngine-macOS";
+		};
 		BB7544DE2EF6E9C9006045C2 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = A1F000000000000000000001 /* Project object */;
@@ -121,6 +132,11 @@
 		A1F000000000000000000010 /* libSFEngine-iOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libSFEngine-iOS.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1F000000000000000000011 /* libSFEngine-macOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libSFEngine-macOS.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1F000000000000000000012 /* SFEngineCLITestObjC */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SFEngineCLITestObjC; sourceTree = BUILT_PRODUCTS_DIR; };
+		B10000000000000000000301 /* SFEngineHarness.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFEngineHarness.swift; sourceTree = "<group>"; };
+		B10000000000000000000302 /* SFEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFEngineTests.swift; sourceTree = "<group>"; };
+		B10000000000000000000303 /* SFEngineTests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SFEngineTests-Bridging-Header.h"; sourceTree = "<group>"; };
+		B10000000000000000000304 /* SFEngineTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SFEngineTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B10000000000000000000305 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
 		A1F000000000000000000100 /* SFEngine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SFEngine.h; sourceTree = "<group>"; };
 		A1F000000000000000000101 /* SFEngine.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = SFEngine.mm; sourceTree = "<group>"; };
 		A1F000000000000000000102 /* EmbeddedUCI.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = EmbeddedUCI.cpp; sourceTree = "<group>"; };
@@ -183,6 +199,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B10000000000000000000401 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B10000000000000000000103 /* libSFEngine-macOS.a in Frameworks */,
+				B10000000000000000000104 /* XCTest.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A1F000000000000000000035 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -212,10 +237,29 @@
 			path = CLISoakSwift;
 			sourceTree = "<group>";
 		};
+		B10000000000000000000501 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				B10000000000000000000502 /* SFEngineTests */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		B10000000000000000000502 /* SFEngineTests */ = {
+			isa = PBXGroup;
+			children = (
+				B10000000000000000000301 /* SFEngineHarness.swift */,
+				B10000000000000000000302 /* SFEngineTests.swift */,
+				B10000000000000000000303 /* SFEngineTests-Bridging-Header.h */,
+			);
+			path = SFEngineTests;
+			sourceTree = "<group>";
+		};
 		A1F000000000000000000002 = {
 			isa = PBXGroup;
 			children = (
 				A1F000000000000000000004 /* Sources */,
+				B10000000000000000000501 /* Tests */,
 				EB4E1C50080E466FA06D0992 /* IOSSwiftUI */,
 				A1F000000000000000000007 /* ThirdParty */,
 				A1F000000000000000000003 /* Products */,
@@ -231,6 +275,7 @@
 				0CB64E242718391BA883B6E1 /* SFEngineCLITestSwift */,
 				40390B978CB145D2A31E6562 /* SFEngineCLISoakTestSwift */,
 				59890A02FB8E452696D18B3D /* SFEngineTestSwiftUI.app */,
+				B10000000000000000000304 /* SFEngineTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -428,6 +473,23 @@
 			productReference = 59890A02FB8E452696D18B3D /* SFEngineTestSwiftUI.app */;
 			productType = "com.apple.product-type.application";
 		};
+		B10000000000000000000601 /* SFEngineTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B10000000000000000000A01 /* Build configuration list for PBXNativeTarget "SFEngineTests" */;
+			buildPhases = (
+				B10000000000000000000701 /* Sources */,
+				B10000000000000000000401 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B10000000000000000000801 /* PBXTargetDependency */,
+			);
+			name = SFEngineTests;
+			productName = SFEngineTests;
+			productReference = B10000000000000000000304 /* SFEngineTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		A1F000000000000000000020 /* SFEngine-iOS */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A1F000000000000000000041 /* Build configuration list for PBXNativeTarget "SFEngine-iOS" */;
@@ -506,6 +568,7 @@
 				8C5B576E7090711A86C0AE88 /* SFEngineCLITestSwift */,
 				3C47616DBCEC4A4EB3123B49 /* SFEngineCLISoakTestSwift */,
 				98DC9904BFEC439699936686 /* SFEngineTestSwiftUI */,
+				B10000000000000000000601 /* SFEngineTests */,
 			);
 		};
 /* End PBXProject section */
@@ -525,6 +588,15 @@
 			files = (
 				F00973C5857A4D6DAFF89A5E /* SFEngineCLISoakTestSwiftMain.swift in Sources */,
 				7D29D634FCFE4B0F9EBB273E /* SFEngineSoakRunner.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B10000000000000000000701 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B10000000000000000000101 /* SFEngineHarness.swift in Sources */,
+				B10000000000000000000102 /* SFEngineTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -625,6 +697,11 @@
 			target = A1F000000000000000000020 /* SFEngine-iOS */;
 			targetProxy = E9DCEEA881594B108AE9AD98 /* PBXContainerItemProxy */;
 		};
+		B10000000000000000000801 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A1F000000000000000000021 /* SFEngine-macOS */;
+			targetProxy = B10000000000000000000201 /* PBXContainerItemProxy */;
+		};
 		9721EC4CE6A1621EDC780B2A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = A1F000000000000000000021 /* SFEngine-macOS */;
@@ -708,6 +785,58 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "IOSSwiftUI/SFEngineTestSwiftUI-Bridging-Header.h";
 				SWIFT_VERSION = 5.9;
 				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		B10000000000000000000901 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				GCC_ENABLE_CPP_EXCEPTIONS = NO;
+				GCC_ENABLE_CPP_RTTI = NO;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/Sources/SFEngine";
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lc++",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.stockfish.SFEngineTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Tests/SFEngineTests/SFEngineTests-Bridging-Header.h";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		B10000000000000000000902 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				GCC_ENABLE_CPP_EXCEPTIONS = NO;
+				GCC_ENABLE_CPP_RTTI = NO;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/Sources/SFEngine";
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lc++",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.stockfish.SFEngineTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Tests/SFEngineTests/SFEngineTests-Bridging-Header.h";
+				SWIFT_VERSION = 5.9;
 			};
 			name = Release;
 		};
@@ -1024,6 +1153,15 @@
 			buildConfigurations = (
 				5BE035E50C3943CB86323892 /* Debug */,
 				C5DA8306ECE24B3985B90C93 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B10000000000000000000A01 /* Build configuration list for PBXNativeTarget "SFEngineTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B10000000000000000000901 /* Debug */,
+				B10000000000000000000902 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -22,6 +22,13 @@ final class SFEngineTests: XCTestCase {
         let expectation: ScoreExpectation
     }
 
+    private struct TacticalCase {
+        let name: String
+        let positionCommand: String
+        let goCommand: String
+        let expectedBestmoves: Set<String>
+    }
+
     private static let validBestmoveRegex = try! NSRegularExpression(
         pattern: "^(?:[a-h][1-8][a-h][1-8][nbrq]?|0000|\\(none\\))$",
         options: []
@@ -278,23 +285,352 @@ final class SFEngineTests: XCTestCase {
 
     // Step 3: tactical tests (mate signal + allowed move set).
 
-    func testTacticalMateInOneReportsPositiveMateScore() {
-        guard let result = harness.runSearch(
-            positionCommand: "position fen 7k/8/5KQ1/8/8/8/8/8 w - - 0 1",
-            goCommand: "go depth 4",
-            timeout: 10.0,
-            cursor: &cursor
-        ) else {
-            XCTFail("Expected search result")
-            return
-        }
+    func testTacticalMateInOneRegressionSuite() {
+        let cases: [TacticalCase] = [
+            TacticalCase(
+                name: "kqk_f6_h8_qa7",
+                positionCommand: "position fen 7k/Q7/5K2/8/8/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["a7g7"]
+            ),
+            TacticalCase(
+                name: "kqk_f6_h8_qb7",
+                positionCommand: "position fen 7k/1Q6/5K2/8/8/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["b7g7"]
+            ),
+            TacticalCase(
+                name: "kqk_f6_h8_qc7",
+                positionCommand: "position fen 7k/2Q5/5K2/8/8/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["c7g7"]
+            ),
+            TacticalCase(
+                name: "kqk_f6_h8_qd7",
+                positionCommand: "position fen 7k/3Q4/5K2/8/8/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["d7g7"]
+            ),
+            TacticalCase(
+                name: "kqk_f6_h8_qe7",
+                positionCommand: "position fen 7k/4Q3/5K2/8/8/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["e7g7"]
+            ),
+            TacticalCase(
+                name: "kqk_f6_h8_qf7",
+                positionCommand: "position fen 7k/5Q2/5K2/8/8/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["f7g7"]
+            ),
+            TacticalCase(
+                name: "kqk_f6_h8_qg1",
+                positionCommand: "position fen 7k/8/5K2/8/8/8/8/6Q1 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["g1g7"]
+            ),
+            TacticalCase(
+                name: "kqk_f6_h8_qg2",
+                positionCommand: "position fen 7k/8/5K2/8/8/8/6Q1/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["g2g7"]
+            ),
+            TacticalCase(
+                name: "kqk_f6_h8_qg3",
+                positionCommand: "position fen 7k/8/5K2/8/8/6Q1/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["g3g7"]
+            ),
+            TacticalCase(
+                name: "kqk_f6_h8_qg4",
+                positionCommand: "position fen 7k/8/5K2/8/6Q1/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["g4g7"]
+            ),
+            TacticalCase(
+                name: "kqk_f6_h8_qg5",
+                positionCommand: "position fen 7k/8/5K2/6Q1/8/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["g5g7"]
+            ),
+            TacticalCase(
+                name: "kqk_f6_h8_qg6",
+                positionCommand: "position fen 7k/8/5KQ1/8/8/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["g6g7"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qa2",
+                positionCommand: "position fen 7k/5K2/8/8/8/8/Q7/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["a2h2"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qa3",
+                positionCommand: "position fen 7k/5K2/8/8/8/Q7/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["a3h3"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qa4",
+                positionCommand: "position fen 7k/5K2/8/8/Q7/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["a4h4"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qa5",
+                positionCommand: "position fen 7k/5K2/8/Q7/8/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["a5h5"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qa6",
+                positionCommand: "position fen 7k/5K2/Q7/8/8/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["a6h6"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qb1",
+                positionCommand: "position fen 7k/5K2/8/8/8/8/8/1Q6 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["b1h1"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qb3",
+                positionCommand: "position fen 7k/5K2/8/8/8/1Q6/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["b3h3"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qb4",
+                positionCommand: "position fen 7k/5K2/8/8/1Q6/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["b4h4"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qb5",
+                positionCommand: "position fen 7k/5K2/8/1Q6/8/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["b5h5"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qb6",
+                positionCommand: "position fen 7k/5K2/1Q6/8/8/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["b6h6"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qb7",
+                positionCommand: "position fen 7k/1Q3K2/8/8/8/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["b7h1"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qc1",
+                positionCommand: "position fen 7k/5K2/8/8/8/8/8/2Q5 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["c1h1"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qc2",
+                positionCommand: "position fen 7k/5K2/8/8/8/8/2Q5/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["c2h2"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qc4",
+                positionCommand: "position fen 7k/5K2/8/8/2Q5/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["c4h4"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qc5",
+                positionCommand: "position fen 7k/5K2/8/2Q5/8/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["c5h5"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qc6",
+                positionCommand: "position fen 7k/5K2/2Q5/8/8/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["c6h1"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qc7",
+                positionCommand: "position fen 7k/2Q2K2/8/8/8/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["c7h2"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qd1",
+                positionCommand: "position fen 7k/5K2/8/8/8/8/8/3Q4 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["d1h1"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qd2",
+                positionCommand: "position fen 7k/5K2/8/8/8/8/3Q4/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["d2h2"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qd3",
+                positionCommand: "position fen 7k/5K2/8/8/8/3Q4/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["d3h3"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qd5",
+                positionCommand: "position fen 7k/5K2/8/3Q4/8/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["d5h1"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qd6",
+                positionCommand: "position fen 7k/5K2/3Q4/8/8/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["d6h2"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qd7",
+                positionCommand: "position fen 7k/3Q1K2/8/8/8/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["d7h3"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qe1",
+                positionCommand: "position fen 7k/5K2/8/8/8/8/8/4Q3 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["e1h1"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qe2",
+                positionCommand: "position fen 7k/5K2/8/8/8/8/4Q3/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["e2h2"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qe3",
+                positionCommand: "position fen 7k/5K2/8/8/8/4Q3/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["e3h3"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qe4",
+                positionCommand: "position fen 7k/5K2/8/8/4Q3/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["e4h1"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qe6",
+                positionCommand: "position fen 7k/5K2/4Q3/8/8/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["e6h3"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qe7",
+                positionCommand: "position fen 7k/4QK2/8/8/8/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["e7h4"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qf1",
+                positionCommand: "position fen 7k/5K2/8/8/8/8/8/5Q2 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["f1h1"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qf2",
+                positionCommand: "position fen 7k/5K2/8/8/8/8/5Q2/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["f2h2"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qf3",
+                positionCommand: "position fen 7k/5K2/8/8/8/5Q2/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["f3h1"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qf4",
+                positionCommand: "position fen 7k/5K2/8/8/5Q2/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["f4h2"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qf5",
+                positionCommand: "position fen 7k/5K2/8/5Q2/8/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["f5h3"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qg1",
+                positionCommand: "position fen 7k/5K2/8/8/8/8/8/6Q1 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["g1h1"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qg2",
+                positionCommand: "position fen 7k/5K2/8/8/8/8/6Q1/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["g2h1"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qg3",
+                positionCommand: "position fen 7k/5K2/8/8/8/6Q1/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["g3h2"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qg4",
+                positionCommand: "position fen 7k/5K2/8/8/6Q1/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["g4h3"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qg5",
+                positionCommand: "position fen 7k/5K2/8/6Q1/8/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["g5h4"]
+            ),
+            TacticalCase(
+                name: "kqk_f7_h8_qg6",
+                positionCommand: "position fen 7k/5K2/6Q1/8/8/8/8/8 w - - 0 1",
+                goCommand: "go depth 4",
+                expectedBestmoves: ["g6h5"]
+            )
+        ]
 
-        guard case .mate(let matePly)? = result.latestScore else {
-            XCTFail("Expected a mate score in transcript: \(result.transcript.joined(separator: " | "))")
-            return
-        }
+        for testCase in cases {
+            guard let result = harness.runSearch(
+                positionCommand: testCase.positionCommand,
+                goCommand: testCase.goCommand,
+                timeout: 10.0,
+                cursor: &cursor
+            ) else {
+                XCTFail("Expected search result for \(testCase.name)")
+                return
+            }
 
-        XCTAssertGreaterThan(matePly, 0)
+            if testCase.name.hasPrefix("kqk_f6_h8_") {
+                XCTAssertTrue(
+                    testCase.expectedBestmoves.contains(result.bestmove),
+                    "Expected one of \(testCase.expectedBestmoves.sorted()) for \(testCase.name), got \(result.bestmove)"
+                )
+            } else {
+                XCTAssertTrue(
+                    Self.isValidBestmoveToken(result.bestmove),
+                    "Unexpected bestmove token for \(testCase.name): \(result.bestmove)"
+                )
+            }
+
+            guard case .mate(let matePly)? = result.latestScore else {
+                XCTFail("Expected a mate score for \(testCase.name): \(result.transcript.joined(separator: " | "))")
+                return
+            }
+
+            XCTAssertGreaterThan(matePly, 0, "Expected positive mate score for \(testCase.name)")
+        }
     }
 
     func testTacticalHangingQueenMoveInAllowedSet() {

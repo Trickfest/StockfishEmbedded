@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 - Refactored the `SFEngineTests` harness and tests to async/await, replacing semaphore-based waits and cursor polling with an async line mailbox and async XCTest expectations.
+- Shared CLI Xcode schemes for `SFEngineCLITestObjC`, `SFEngineCLITestSwift`, and `SFEngineCLISoakTestSwift`; enabled `NSUnbufferedIO=YES` for immediate console output during Run; and set default soak Run arguments to `--iterations 5 --movetime 500 --log-output`.
 
 ## [1.1.0] - 2026-02-09
 ### Changed

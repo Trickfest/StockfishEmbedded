@@ -513,13 +513,10 @@ Bitboard Position::attackers_to(Square s, Bitboard occupied) const {
 
 bool Position::attackers_to_exist(Square s, Bitboard occupied, Color c) const {
 
-    return ((attacks_bb<ROOK>(s) & pieces(c, ROOK, QUEEN))
-            && (attacks_bb<ROOK>(s, occupied) & pieces(c, ROOK, QUEEN)))
-        || ((attacks_bb<BISHOP>(s) & pieces(c, BISHOP, QUEEN))
-            && (attacks_bb<BISHOP>(s, occupied) & pieces(c, BISHOP, QUEEN)))
-        || (((attacks_bb<PAWN>(s, ~c) & pieces(PAWN)) | (attacks_bb<KNIGHT>(s) & pieces(KNIGHT))
-             | (attacks_bb<KING>(s) & pieces(KING)))
-            & pieces(c));
+    return (attacks_bb<ROOK>(s, occupied) & pieces(c, ROOK, QUEEN))
+        || (attacks_bb<BISHOP>(s, occupied) & pieces(c, BISHOP, QUEEN))
+        || (attacks_bb<PAWN>(s, ~c) & pieces(c, PAWN))
+        || (attacks_bb<KNIGHT>(s) & pieces(c, KNIGHT)) || (attacks_bb<KING>(s) & pieces(c, KING));
 }
 
 // Tests whether a pseudo-legal move is legal
@@ -1072,7 +1069,7 @@ void write_multiple_dirties(const Position& p,
 
     const __m512i dirties =
       _mm512_ternarylogic_epi32(template_v, threat_squares, threat_pieces, 254 /* A | B | C */);
-    _mm512_storeu_si512(reinterpret_cast<__m512i*>(write), dirties);
+    _mm512_storeu_si512(write, dirties);
 }
 #endif
 
@@ -1084,16 +1081,48 @@ void Position::update_piece_threats(Piece                     pc,
     const Bitboard occupied     = pieces();
     const Bitboard rookQueens   = pieces(ROOK, QUEEN);
     const Bitboard bishopQueens = pieces(BISHOP, QUEEN);
-    const Bitboard knights      = pieces(KNIGHT);
+    const Bitboard rAttacks     = attacks_bb<ROOK>(s, occupied);
+    const Bitboard bAttacks     = attacks_bb<BISHOP>(s, occupied);
     const Bitboard kings        = pieces(KING);
-    const Bitboard whitePawns   = pieces(WHITE, PAWN);
-    const Bitboard blackPawns   = pieces(BLACK, PAWN);
+    Bitboard       occupiedNoK  = occupied ^ kings;
 
-    const Bitboard rAttacks = attacks_bb<ROOK>(s, occupied);
-    const Bitboard bAttacks = attacks_bb<BISHOP>(s, occupied);
+    Bitboard sliders         = (rookQueens & rAttacks) | (bishopQueens & bAttacks);
+    auto     process_sliders = [&](bool addDirectAttacks) {
+        while (sliders)
+        {
+            Square sliderSq = pop_lsb(sliders);
+            Piece  slider   = piece_on(sliderSq);
 
-    Bitboard threatened = attacks_bb(pc, s, occupied) & occupied;
-    Bitboard sliders    = (rookQueens & rAttacks) | (bishopQueens & bAttacks);
+            const Bitboard ray        = RayPassBB[sliderSq][s];
+            const Bitboard discovered = ray & (rAttacks | bAttacks) & occupiedNoK;
+
+            assert(!more_than_one(discovered));
+            if (discovered && (RayPassBB[sliderSq][s] & noRaysContaining) != noRaysContaining)
+            {
+                const Square threatenedSq = lsb(discovered);
+                const Piece  threatenedPc = piece_on(threatenedSq);
+                add_dirty_threat<!PutPiece>(dts, slider, threatenedPc, sliderSq, threatenedSq);
+            }
+
+            if (addDirectAttacks)
+                add_dirty_threat<PutPiece>(dts, slider, pc, sliderSq, s);
+        }
+    };
+
+    if (type_of(pc) == KING)
+    {
+        if constexpr (ComputeRay)
+            process_sliders(false);
+        return;
+    }
+
+
+    const Bitboard knights    = pieces(KNIGHT);
+    const Bitboard whitePawns = pieces(WHITE, PAWN);
+    const Bitboard blackPawns = pieces(BLACK, PAWN);
+
+
+    Bitboard threatened = attacks_bb(pc, s, occupied) & occupiedNoK;
     Bitboard incoming_threats =
       (PseudoAttacks[KNIGHT][s] & knights) | (attacks_bb<PAWN>(s, WHITE) & blackPawns)
       | (attacks_bb<PAWN>(s, BLACK) & whitePawns) | (PseudoAttacks[KING][s] & kings);
@@ -1102,7 +1131,9 @@ void Position::update_piece_threats(Piece                     pc,
     if constexpr (PutPiece)
     {
         dts->threatenedSqs |= threatened;
-        dts->threateningSqs |= s;
+        // A bit may only be set if that square actually produces a threat, so we
+        // must guard setting the square accordingly
+        dts->threateningSqs |= Bitboard(bool(threatened)) << s;
     }
 
     DirtyThreat dt_template{pc, NO_PIECE, s, Square(0), PutPiece};
@@ -1113,7 +1144,7 @@ void Position::update_piece_threats(Piece                     pc,
 
     if constexpr (PutPiece)
     {
-        dts->threatenedSqs |= s;
+        dts->threatenedSqs |= Bitboard(bool(all_attackers)) << s;  // same as above
         dts->threateningSqs |= all_attackers;
     }
 
@@ -1135,26 +1166,11 @@ void Position::update_piece_threats(Piece                     pc,
 
     if constexpr (ComputeRay)
     {
-        while (sliders)
-        {
-            Square sliderSq = pop_lsb(sliders);
-            Piece  slider   = piece_on(sliderSq);
-
-            const Bitboard ray        = RayPassBB[sliderSq][s] & ~BetweenBB[sliderSq][s];
-            const Bitboard discovered = ray & (rAttacks | bAttacks) & occupied;
-
-            assert(!more_than_one(discovered));
-            if (discovered && (RayPassBB[sliderSq][s] & noRaysContaining) != noRaysContaining)
-            {
-                const Square threatenedSq = lsb(discovered);
-                const Piece  threatenedPc = piece_on(threatenedSq);
-                add_dirty_threat<!PutPiece>(dts, slider, threatenedPc, sliderSq, threatenedSq);
-            }
-
-#ifndef USE_AVX512ICL  // for ICL, direct threats were processed earlier (all_attackers)
-            add_dirty_threat<PutPiece>(dts, slider, pc, sliderSq, s);
+#ifndef USE_AVX512ICL
+        process_sliders(true);
+#else  // for ICL, direct threats were processed earlier (all_attackers)
+        process_sliders(false);
 #endif
-        }
     }
     else
     {
@@ -1497,6 +1513,23 @@ bool Position::pos_is_ok() const {
 
     if ((pieces(PAWN) & (Rank1BB | Rank8BB)) || pieceCount[W_PAWN] > 8 || pieceCount[B_PAWN] > 8)
         assert(0 && "pos_is_ok: Pawns");
+
+
+    if (ep_square() != SQ_NONE)
+    {
+        Square ksq = square<KING>(sideToMove);
+
+        Bitboard captured = (ep_square() + pawn_push(~sideToMove)) & pieces(~sideToMove, PAWN);
+        Bitboard pawns    = attacks_bb<PAWN>(ep_square(), ~sideToMove) & pieces(sideToMove, PAWN);
+        Bitboard potentialCheckers = pieces(~sideToMove) ^ captured;
+
+        if (!captured || !pawns
+            || ((attackers_to(ksq, pieces() ^ captured ^ ep_square() ^ lsb(pawns))
+                 & potentialCheckers)
+                && (attackers_to(ksq, pieces() ^ captured ^ ep_square() ^ msb(pawns))
+                    & potentialCheckers)))
+            assert(0 && "pos_is_ok: En passant square");
+    }
 
     if ((pieces(WHITE) & pieces(BLACK)) || (pieces(WHITE) | pieces(BLACK)) != pieces()
         || popcount(pieces(WHITE)) > 16 || popcount(pieces(BLACK)) > 16)

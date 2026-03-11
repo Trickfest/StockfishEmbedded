@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+
+## [1.2.0] - 2026-03-11
 ### Added
 - Added `SFEngineTests` XCTest harness with baseline coverage for wrapper contracts, perft node counts, tactical checks, and score-band assertions.
 - Expanded `SFEngineTests` coverage with additional contract checks, perft positions, score-band cases, and a larger data-driven tactical mate-in-one regression set.
@@ -12,6 +14,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 - Refactored the `SFEngineTests` harness and tests to async/await, replacing semaphore-based waits and cursor polling with an async line mailbox and async XCTest expectations.
 - Shared CLI Xcode schemes for `SFEngineCLITestObjC`, `SFEngineCLITestSwift`, and `SFEngineCLISoakTestSwift`; enabled `NSUnbufferedIO=YES` for immediate console output during Run; and set default soak Run arguments to `--iterations 5 --movetime 500 --log-output`.
+- Updated vendored Stockfish subtree to upstream commit `b3a810a1c4201059bb97f6917df3276c03167a50` (official `master` as of 2026-03-11).
+- Updated NNUE instructions to use `nn-9a0cc2a62c52.nnue` (big net) and `nn-47fc8b7fff06.nnue` (small net).
+- Applied minor Xcode project file tweaks.
 
 ## [1.1.0] - 2026-02-09
 ### Changed

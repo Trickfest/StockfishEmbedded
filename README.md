@@ -104,7 +104,7 @@ Highlights:
 - Xcode targets include macOS CLI smoke tests and an iOS/iPadOS SwiftUI smoke app.
 
 ## Adapter details
-- `SFEngine` spins the engine on a background thread, swapping `std::cin/std::cout` to custom stream buffers that talk to a thread-safe queue.
+- `SFEngine` spins the engine on a dedicated worker thread, swapping `std::cin/std::cout` to custom stream buffers that talk to a thread-safe queue.
 - `stop` enqueues `stop` + `quit`, closes the queue (to guarantee EOF), and waits briefly for a clean shutdown.
 - Stockfish sources are unmodified; the tiny `EmbeddedUCI` shim calls the upstream UCI loop after redirecting streams and performing the normal initialization from `main.cpp`.
 

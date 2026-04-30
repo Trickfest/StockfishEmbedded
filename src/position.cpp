@@ -162,9 +162,10 @@ void Position::init() {
 
 
 // Initializes the position object with the given FEN string.
-// This function is not very robust - make sure that input FENs are correct,
-// this is assumed to be the responsibility of the GUI.
-Position& Position::set(const string& fenStr, bool isChess960, StateInfo* si) {
+// The FEN string is strictly validated; if it is invalid or inconsistent,
+// a PositionSetError describing the problem is returned, otherwise std::nullopt.
+std::optional<PositionSetError>
+Position::set(const string& fenStr, bool isChess960, StateInfo* si) {
     /*
    A FEN string defines a particular position using only the ASCII character set.
 
@@ -200,9 +201,7 @@ Position& Position::set(const string& fenStr, bool isChess960, StateInfo* si) {
       incremented after Black's move.
 */
 
-    unsigned char      col, row, token;
-    size_t             idx;
-    Square             sq = SQ_A8;
+    unsigned char      token;
     std::istringstream ss(fenStr);
 
     std::memset(reinterpret_cast<char*>(this), 0, sizeof(Position));
@@ -211,81 +210,213 @@ Position& Position::set(const string& fenStr, bool isChess960, StateInfo* si) {
 
     ss >> std::noskipws;
 
+    int numPieces = 0;
+    int file      = FILE_A;
+    int rank      = RANK_8;
+
     // 1. Piece placement
-    while ((ss >> token) && !isspace(token))
+    for (;;)
     {
+        if (!(ss >> token))
+            return PositionSetError("Invalid FEN. Unexpected end of stream.");
+
+        if (isspace(token))
+            break;
+
         if (isdigit(token))
-            sq += (token - '0') * EAST;  // Advance the given number of files
-
-        else if (token == '/')
-            sq += 2 * SOUTH;
-
-        else if ((idx = PieceToChar.find(token)) != string::npos)
         {
+            const int diff = (token - '0');
+            if (diff < 1 || diff > 8)
+                return PositionSetError("Invalid FEN. Invalid number of squares to skip.");
+
+            file += diff;
+            if (file > FILE_NB)
+                return PositionSetError("Invalid FEN. Invalid file reached.");
+        }
+        else if (token == '/')
+        {
+            if (file != FILE_NB)
+                return PositionSetError(
+                  "Invalid FEN. Trying to end rank when not at the end of it.");
+
+            --rank;
+            file = FILE_A;
+
+            if (rank < RANK_1)
+                return PositionSetError("Invalid FEN. Invalid rank reached.");
+        }
+        else
+        {
+            if (file >= FILE_NB)
+                return PositionSetError("Invalid FEN. Invalid file reached.");
+
+            const size_t idx = PieceToChar.find(token);
+            if (idx == string::npos)
+                return PositionSetError(std::string("Invalid FEN. Invalid piece: ")
+                                        + std::string(1, token));
+
+            if (++numPieces > 32)
+                return PositionSetError("Invalid FEN. More than 32 pieces on the board.");
+
+            const Square sq = make_square(File(file), Rank(rank));
             put_piece(Piece(idx), sq);
-            ++sq;
+
+            ++file;
         }
     }
 
+    if (rank != RANK_1 || file != FILE_NB)
+        return PositionSetError("Invalid FEN. Board state encoding ended but cursor not at end.");
+
+    if (pieces(PAWN) & (RANK_1 | RANK_8))
+        return PositionSetError("Unsupported position. Pawns on the first or eighth rank.");
+
+    if (count<KING>(WHITE) != 1 || count<KING>(BLACK) != 1)
+        return PositionSetError("Unsupported position. Incorrect number of kings.");
+
+    const int wPawns = count<PAWN>(WHITE);
+    const int bPawns = count<PAWN>(BLACK);
+    if (wPawns > 8)
+        return PositionSetError("Unsupported position. WHITE has more than 8 pawns.");
+    if (bPawns > 8)
+        return PositionSetError("Unsupported position. BLACK has more than 8 pawns.");
+
+    const int wAdditionalKnights = std::max((int) count<KNIGHT>(WHITE) - 2, 0);
+    const int bAdditionalKnights = std::max((int) count<KNIGHT>(BLACK) - 2, 0);
+    const int wAdditionalBishops = std::max((int) count<BISHOP>(WHITE) - 2, 0);
+    const int bAdditionalBishops = std::max((int) count<BISHOP>(BLACK) - 2, 0);
+    const int wAdditionalRooks   = std::max((int) count<ROOK>(WHITE) - 2, 0);
+    const int bAdditionalRooks   = std::max((int) count<ROOK>(BLACK) - 2, 0);
+    const int wAdditionalQueens  = std::max((int) count<QUEEN>(WHITE) - 1, 0);
+    const int bAdditionalQueens  = std::max((int) count<QUEEN>(BLACK) - 1, 0);
+    if (wAdditionalKnights + wAdditionalBishops + wAdditionalRooks + wAdditionalQueens > 8 - wPawns)
+        return PositionSetError("Unsupported position. Too many pieces for WHITE.");
+    if (bAdditionalKnights + bAdditionalBishops + bAdditionalRooks + bAdditionalQueens > 8 - bPawns)
+        return PositionSetError("Unsupported position. Too many pieces for BLACK.");
+
     // 2. Active color
-    ss >> token;
+    if (!(ss >> token))
+        return PositionSetError("Invalid FEN. Unexpected end of stream.");
+    if (token != 'w' && token != 'b')
+        return PositionSetError(std::string("Invalid FEN. Invalid side to move: ")
+                                + std::string(1, token));
     sideToMove = (token == 'w' ? WHITE : BLACK);
-    ss >> token;
+    if (!(ss >> token) || !isspace(token) || ss.eof())
+        return PositionSetError("Invalid FEN. Expected whitespace after side to move.");
 
     // 3. Castling availability. Compatible with 3 standards: Normal FEN standard,
     // Shredder-FEN that uses the letters of the columns on which the rooks began
     // the game instead of KQkq and also X-FEN standard that, in case of Chess960,
     // if an inner rook is associated with the castling right, the castling tag is
     // replaced by the file letter of the involved rook, as for the Shredder-FEN.
-    while ((ss >> token) && !isspace(token))
+    //
+    // NOTE: Due to the prevalnce of incorrect (or missing) castling rights the
+    // validation is less strict. However, incorrect castling rights are still sanitized.
+    int num_castling_rights = 0;
+    for (;;)
     {
-        Square rsq;
+        if (!(ss >> token))
+            break;
+
+        if (isspace(token))
+            break;
+
+        if (num_castling_rights == 0 && token == '-')
+        {
+            ss >> std::ws;
+            break;
+        }
+
+        if (++num_castling_rights > 4)
+            return PositionSetError("Invalid FEN. Maximum of 4 castling rights can be specified.");
+
+        Square rsq  = SQ_NONE;
+        Square ksq  = SQ_NONE;
         Color  c    = islower(token) ? BLACK : WHITE;
         Piece  rook = make_piece(c, ROOK);
+        Piece  king = make_piece(c, KING);
 
         token = char(toupper(token));
 
-        if (token == 'K')
-            for (rsq = relative_square(c, SQ_H1); piece_on(rsq) != rook; --rsq)
-            {}
-
-        else if (token == 'Q')
-            for (rsq = relative_square(c, SQ_A1); piece_on(rsq) != rook; ++rsq)
-            {}
-
+        if (token == 'K' || token == 'Q')
+        {
+            const int dir = token == 'K' ? -1 : 1;
+            Square    sq  = relative_square(c, token == 'K' ? SQ_H1 : SQ_A1);
+            // Look for a rook and a king for the castling. King must come later.
+            // Only the first rook is noted.
+            // If the castling rights are available the king must always be between files 2 and 7 inclusive
+            // so there is no need to check the last square.
+            for (int i = 0; i < 7; ++i, sq = Square(sq + dir))
+            {
+                const Piece pc = piece_on(sq);
+                if (pc == king)
+                {
+                    ksq = sq;
+                    break;
+                }
+                else if (pc == rook && rsq == SQ_NONE)
+                {
+                    rsq = sq;
+                }
+            }
+        }
         else if (token >= 'A' && token <= 'H')
-            rsq = make_square(File(token - 'A'), relative_rank(c, RANK_1));
+        {
+            const Square rsqCandidate = make_square(File(token - 'A'), relative_rank(c, RANK_1));
+            if (piece_on(rsqCandidate) == rook)
+                rsq = rsqCandidate;
 
+            // If the castling rights are available the king must always be between files 2 and 7 inclusive.
+            Square sq = relative_square(c, SQ_B1);
+            for (int i = 0; i < 6; ++i, ++sq)
+            {
+                if (piece_on(sq) == king)
+                    ksq = sq;
+            }
+        }
         else
-            continue;
+        {
+            return PositionSetError(std::string("Invalid FEN. Expected castling rights. Got: ")
+                                    + std::string(1, token));
+        }
 
-        set_castling_right(c, rsq);
+        // Only apply castling rights if they can be valid.
+        if (ksq != SQ_NONE && rsq != SQ_NONE)
+            set_castling_right(c, rsq);
     }
 
     // 4. En passant square.
     // Ignore if square is invalid or not on side to move relative rank 6.
-    bool enpassant = false, legalEP = false;
-
-    if (((ss >> col) && (col >= 'a' && col <= 'h'))
-        && ((ss >> row) && (row == (sideToMove == WHITE ? '6' : '3'))))
+    bool          enpassant = false, legalEP = false;
+    unsigned char col = '-', row;
+    ss >> col;
+    if (col != '-')
     {
-        st->epSquare = make_square(File(col - 'a'), Rank(row - '1'));
+        if (!(ss >> row))
+            return PositionSetError("Invalid FEN. Unexpected end of stream.");
 
-        Bitboard pawns  = attacks_bb<PAWN>(st->epSquare, ~sideToMove) & pieces(sideToMove, PAWN);
-        Bitboard target = (pieces(~sideToMove, PAWN) & (st->epSquare + pawn_push(~sideToMove)));
-        Bitboard occ    = pieces() ^ target ^ st->epSquare;
+        if ((col >= 'a' && col <= 'h') && (row == (sideToMove == WHITE ? '6' : '3')))
+        {
+            st->epSquare = make_square(File(col - 'a'), Rank(row - '1'));
 
-        // En passant square will be considered only if
-        // a) side to move have a pawn threatening epSquare
-        // b) there is an enemy pawn in front of epSquare
-        // c) there is no piece on epSquare or behind epSquare
-        enpassant =
-          pawns && target && !(pieces() & (st->epSquare | (st->epSquare + pawn_push(sideToMove))));
+            Bitboard pawns = attacks_bb<PAWN>(st->epSquare, ~sideToMove) & pieces(sideToMove, PAWN);
+            Bitboard target = (pieces(~sideToMove, PAWN) & (st->epSquare + pawn_push(~sideToMove)));
+            Bitboard occ    = pieces() ^ target ^ st->epSquare;
 
-        // If no pawn can execute the en passant capture without leaving the king in check, don't record the epSquare
-        while (pawns)
-            legalEP |= !(attackers_to(square<KING>(sideToMove), occ ^ pop_lsb(pawns))
-                         & pieces(~sideToMove) & ~target);
+            // En passant square will be considered only if
+            // a) side to move have a pawn threatening epSquare
+            // b) there is an enemy pawn in front of epSquare
+            // c) there is no piece on epSquare or behind epSquare
+            enpassant = pawns && target
+                     && !(pieces() & (st->epSquare | (st->epSquare + pawn_push(sideToMove))));
+
+            // If no pawn can execute the en passant capture without leaving the king in check, don't record the epSquare
+            while (pawns)
+                legalEP |= !(attackers_to(square<KING>(sideToMove), occ ^ pop_lsb(pawns))
+                             & pieces(~sideToMove) & ~target);
+        }
+        else
+            return PositionSetError("Invalid FEN. Invalid en-passant square.");
     }
 
     if (!enpassant || !legalEP)
@@ -294,6 +425,14 @@ Position& Position::set(const string& fenStr, bool isChess960, StateInfo* si) {
     // 5-6. Halfmove clock and fullmove number
     ss >> std::skipws >> st->rule50 >> gamePly;
 
+    // Normally values larger than 99 would be pointless but we do support ignoring 50 move rule for TB purposes.
+    // Limit at 2**15 as it's used multiplicativly with position evaluation during search.
+    if (st->rule50 < 0 || st->rule50 > 32767)
+        return PositionSetError("Unsupported position. Rule50 counter out of range.");
+
+    if (gamePly < 0 || gamePly > 100000)
+        return PositionSetError("Unsupported position. Game ply out of range.");
+
     // Convert from fullmove starting from 1 to gamePly starting from 0,
     // handle also common incorrect FEN with fullmove = 0.
     gamePly = std::max(2 * (gamePly - 1), 0) + (sideToMove == BLACK);
@@ -301,9 +440,12 @@ Position& Position::set(const string& fenStr, bool isChess960, StateInfo* si) {
     chess960 = isChess960;
     set_state();
 
+    if (attackers_to_exist(square<KING>(~sideToMove), pieces(), sideToMove))
+        return PositionSetError("Unsupported position. King can be captured.");
+
     assert(pos_is_ok());
 
-    return *this;
+    return std::nullopt;
 }
 
 
@@ -401,7 +543,7 @@ Key Position::compute_material_key() const {
 
 // Overload to initialize the position object with the given endgame code string
 // like "KBPKN". It's mainly a helper to get the material key out of an endgame code.
-Position& Position::set(const string& code, Color c, StateInfo* si) {
+std::optional<PositionSetError> Position::set(const string& code, Color c, StateInfo* si) {
 
     assert(code[0] == 'K');
 
@@ -530,24 +672,6 @@ bool Position::legal(Move m) const {
 
     assert(color_of(moved_piece(m)) == us);
     assert(piece_on(square<KING>(us)) == make_piece(us, KING));
-
-    // En passant captures are a tricky special case. Because they are rather
-    // uncommon, we do it simply by testing whether the king is attacked after
-    // the move is made.
-    if (m.type_of() == EN_PASSANT)
-    {
-        Square   ksq      = square<KING>(us);
-        Square   capsq    = to - pawn_push(us);
-        Bitboard occupied = (pieces() ^ from ^ capsq) | to;
-
-        assert(to == ep_square());
-        assert(moved_piece(m) == make_piece(us, PAWN));
-        assert(piece_on(capsq) == make_piece(~us, PAWN));
-        assert(piece_on(to) == NO_PIECE);
-
-        return !(attacks_bb<ROOK>(ksq, occupied) & pieces(~us, QUEEN, ROOK))
-            && !(attacks_bb<BISHOP>(ksq, occupied) & pieces(~us, QUEEN, BISHOP));
-    }
 
     // Castling moves generation does not check if the castling path is clear of
     // enemy attacks, it is delayed at a later time: now!
@@ -736,13 +860,12 @@ void Position::do_move(Move                      m,
     Piece  pc       = piece_on(from);
     Piece  captured = m.type_of() == EN_PASSANT ? make_piece(them, PAWN) : piece_on(to);
 
-    dp.pc             = pc;
-    dp.from           = from;
-    dp.to             = to;
-    dp.add_sq         = SQ_NONE;
-    dts.us            = us;
-    dts.prevKsq       = square<KING>(us);
-    dts.threatenedSqs = dts.threateningSqs = 0;
+    dp.pc       = pc;
+    dp.from     = from;
+    dp.to       = to;
+    dp.add_sq   = SQ_NONE;
+    dts.us      = us;
+    dts.prevKsq = square<KING>(us);
 
     assert(color_of(pc) == us);
     assert(captured == NO_PIECE || color_of(captured) == (m.type_of() != CASTLING ? them : us));
@@ -824,13 +947,22 @@ void Position::do_move(Move                      m,
     // Move the piece. The tricky Chess960 castling is handled earlier
     if (m.type_of() != CASTLING)
     {
+        Piece toPc = pc;
+        if (m.type_of() == PROMOTION)
+            toPc = make_piece(us, m.promotion_type());
+
         if (captured && m.type_of() != EN_PASSANT)
         {
             remove_piece(from, &dts);
-            swap_piece(to, pc, &dts);
+            swap_piece(to, toPc, &dts);
         }
-        else
+        else if (pc == toPc)
             move_piece(from, to, &dts);
+        else
+        {
+            remove_piece(from, &dts);
+            put_piece(toPc, to, &dts);
+        }
     }
 
     // If the moving piece is a pawn do some special extra work
@@ -863,13 +995,11 @@ void Position::do_move(Move                      m,
 
         else if (m.type_of() == PROMOTION)
         {
-            Piece     promotion     = make_piece(us, m.promotion_type());
-            PieceType promotionType = type_of(promotion);
+            PieceType pt        = m.promotion_type();
+            Piece     promotion = make_piece(us, pt);
 
             assert(relative_rank(us, to) == RANK_8);
-            assert(type_of(promotion) >= KNIGHT && type_of(promotion) <= QUEEN);
-
-            swap_piece(to, promotion, &dts);
+            assert(pt >= KNIGHT && pt <= QUEEN);
 
             dp.add_pc = promotion;
             dp.add_sq = to;
@@ -882,7 +1012,7 @@ void Position::do_move(Move                      m,
                              ^ Zobrist::psq[pc][8 + pieceCount[pc]];
             st->nonPawnKey[us] ^= Zobrist::psq[promotion][to];
 
-            if (promotionType <= BISHOP)
+            if (pt <= BISHOP)
                 st->minorPieceKey ^= Zobrist::psq[promotion][to];
 
             // Update material
@@ -981,9 +1111,8 @@ void Position::undo_move(Move m) {
         assert(type_of(pc) == m.promotion_type());
         assert(type_of(pc) >= KNIGHT && type_of(pc) <= QUEEN);
 
-        remove_piece(to);
         pc = make_piece(us, PAWN);
-        put_piece(pc, to);
+        swap_piece(to, pc);
     }
 
     if (m.type_of() == CASTLING)
@@ -1021,16 +1150,13 @@ void Position::undo_move(Move m) {
     assert(pos_is_ok());
 }
 
-template<bool PutPiece>
-inline void add_dirty_threat(
-  DirtyThreats* const dts, Piece pc, Piece threatened, Square s, Square threatenedSq) {
-    if (PutPiece)
-    {
-        dts->threatenedSqs |= threatenedSq;
-        dts->threateningSqs |= s;
-    }
-
-    dts->list.push_back({pc, threatened, s, threatenedSq, PutPiece});
+inline void add_dirty_threat(DirtyThreats* const dts,
+                             bool                putPiece,
+                             Piece               pc,
+                             Piece               threatened,
+                             Square              s,
+                             Square              threatenedSq) {
+    dts->list.push_back({pc, threatened, s, threatenedSq, putPiece});
 }
 
 #ifdef USE_AVX512ICL
@@ -1043,13 +1169,8 @@ void write_multiple_dirties(const Position& p,
                             DirtyThreats*   dts) {
     static_assert(sizeof(DirtyThreat) == 4);
 
-    const __m512i board      = _mm512_loadu_si512(p.piece_array().data());
-    const __m512i AllSquares = _mm512_set_epi8(
-      63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41,
-      40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18,
-      17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
-
-    const int dt_count = popcount(mask);
+    const __m512i board    = _mm512_loadu_si512(p.piece_array().data());
+    const int     dt_count = popcount(mask);
     assert(dt_count <= 16);
 
     const __m512i template_v = _mm512_set1_epi32(dt_template.raw());
@@ -1073,8 +1194,9 @@ void write_multiple_dirties(const Position& p,
 }
 #endif
 
-template<bool PutPiece, bool ComputeRay>
+template<bool ComputeRay>
 void Position::update_piece_threats(Piece                     pc,
+                                    bool                      putPiece,
                                     Square                    s,
                                     DirtyThreats* const       dts,
                                     [[maybe_unused]] Bitboard noRaysContaining) const {
@@ -1101,11 +1223,11 @@ void Position::update_piece_threats(Piece                     pc,
             {
                 const Square threatenedSq = lsb(discovered);
                 const Piece  threatenedPc = piece_on(threatenedSq);
-                add_dirty_threat<!PutPiece>(dts, slider, threatenedPc, sliderSq, threatenedSq);
+                add_dirty_threat(dts, !putPiece, slider, threatenedPc, sliderSq, threatenedSq);
             }
 
             if (addDirectAttacks)
-                add_dirty_threat<PutPiece>(dts, slider, pc, sliderSq, s);
+                add_dirty_threat(dts, putPiece, slider, pc, sliderSq, s);
         }
     };
 
@@ -1124,31 +1246,34 @@ void Position::update_piece_threats(Piece                     pc,
 
     Bitboard threatened = attacks_bb(pc, s, occupied) & occupiedNoK;
     Bitboard incoming_threats =
-      (PseudoAttacks[KNIGHT][s] & knights) | (attacks_bb<PAWN>(s, WHITE) & blackPawns)
-      | (attacks_bb<PAWN>(s, BLACK) & whitePawns) | (PseudoAttacks[KING][s] & kings);
+      (PseudoAttacks[KNIGHT][s] & knights) | (PseudoAttacks[KING][s] & kings);
 
-#ifdef USE_AVX512ICL
-    if constexpr (PutPiece)
+    // Compute both incoming and outgoing pawn threats. Incoming pawn pushers are only
+    // added if 'pc' is a pawn.
+    if (type_of(pc) == PAWN)
     {
-        dts->threatenedSqs |= threatened;
-        // A bit may only be set if that square actually produces a threat, so we
-        // must guard setting the square accordingly
-        dts->threateningSqs |= Bitboard(bool(threatened)) << s;
+        Bitboard whiteAttacks = PawnPushOrAttacks[WHITE][s];
+        Bitboard blackAttacks = PawnPushOrAttacks[BLACK][s];
+
+        threatened |= (color_of(pc) == WHITE ? whiteAttacks : blackAttacks) & pieces(PAWN);
+
+        incoming_threats |= whiteAttacks & blackPawns;
+        incoming_threats |= blackAttacks & whitePawns;
+    }
+    else
+    {
+        incoming_threats |=
+          (attacks_bb<PAWN>(s, WHITE) & blackPawns) | (attacks_bb<PAWN>(s, BLACK) & whitePawns);
     }
 
-    DirtyThreat dt_template{pc, NO_PIECE, s, Square(0), PutPiece};
+#ifdef USE_AVX512ICL
+    DirtyThreat dt_template{pc, NO_PIECE, s, Square(0), putPiece};
     write_multiple_dirties<DirtyThreat::ThreatenedSqOffset, DirtyThreat::ThreatenedPcOffset>(
       *this, threatened, dt_template, dts);
 
     Bitboard all_attackers = sliders | incoming_threats;
 
-    if constexpr (PutPiece)
-    {
-        dts->threatenedSqs |= Bitboard(bool(all_attackers)) << s;  // same as above
-        dts->threateningSqs |= all_attackers;
-    }
-
-    dt_template = {NO_PIECE, pc, Square(0), s, PutPiece};
+    dt_template = {NO_PIECE, pc, Square(0), s, putPiece};
     write_multiple_dirties<DirtyThreat::PcSqOffset, DirtyThreat::PcOffset>(*this, all_attackers,
                                                                            dt_template, dts);
 #else
@@ -1160,7 +1285,7 @@ void Position::update_piece_threats(Piece                     pc,
         assert(threatenedSq != s);
         assert(threatenedPc);
 
-        add_dirty_threat<PutPiece>(dts, pc, threatenedPc, s, threatenedSq);
+        add_dirty_threat(dts, putPiece, pc, threatenedPc, s, threatenedSq);
     }
 #endif
 
@@ -1186,7 +1311,7 @@ void Position::update_piece_threats(Piece                     pc,
         assert(srcSq != s);
         assert(srcPc != NO_PIECE);
 
-        add_dirty_threat<PutPiece>(dts, srcPc, pc, srcSq, s);
+        add_dirty_threat(dts, putPiece, srcPc, pc, srcSq, s);
     }
 #endif
 }
@@ -1268,7 +1393,7 @@ void Position::undo_null_move() {
 
 
 // Tests if the SEE (Static Exchange Evaluation)
-// value of move is greater or equal to the given threshold. We'll use an
+// value of the move is greater or equal to the given threshold. We'll use an
 // algorithm similar to alpha-beta pruning with a null window.
 bool Position::see_ge(Move m, int threshold) const {
 

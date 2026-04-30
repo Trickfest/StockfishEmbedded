@@ -21,7 +21,7 @@
 #include "full_threats.h"
 
 #include <array>
-#include <cstddef>
+#include <cassert>
 #include <cstdint>
 #include <initializer_list>
 #include <utility>
@@ -72,7 +72,7 @@ constexpr auto make_piece_indices_piece() {
 
     for (Square from = SQ_A1; from <= SQ_H8; ++from)
     {
-        Bitboard attacks = PseudoAttacks[C][from];
+        Bitboard attacks = PawnPushOrAttacks[C][from];
 
         for (Square to = SQ_A1; to <= SQ_H8; ++to)
         {
@@ -135,8 +135,8 @@ constexpr auto init_threat_offsets() {
 
             else if (from >= SQ_A2 && from <= SQ_H7)
             {
-                Bitboard attacks = (pieceIdx < 8) ? pawn_attacks_bb<WHITE>(square_bb(from))
-                                                  : pawn_attacks_bb<BLACK>(square_bb(from));
+                Bitboard attacks =
+                  (pieceIdx < 8) ? PawnPushOrAttacks[WHITE][from] : PawnPushOrAttacks[BLACK][from];
                 cumulativePieceOffset += constexpr_popcount(attacks);
             }
         }
@@ -207,65 +207,60 @@ inline sf_always_inline IndexType FullThreats::make_index(
 // Get a list of indices for active features in ascending order
 
 void FullThreats::append_active_indices(Color perspective, const Position& pos, IndexList& active) {
-    Square   ksq      = pos.square<KING>(perspective);
-    Bitboard occupied = pos.pieces();
+    const Square   ksq      = pos.square<KING>(perspective);
+    const Bitboard occupied = pos.pieces();
+    const Bitboard pawns    = pos.pieces(PAWN);
 
     for (Color color : {WHITE, BLACK})
     {
-        for (PieceType pt = PAWN; pt < KING; ++pt)
+        const Color c = Color(perspective ^ color);
+
         {
-            Color    c        = Color(perspective ^ color);
-            Piece    attacker = make_piece(c, pt);
-            Bitboard bb       = pos.pieces(c, pt);
+            const Piece    attacker = make_piece(c, PAWN);
+            const Bitboard cPawns   = pos.pieces(c, PAWN);
+            // Set of pawns which are prevented from movement by a pawn in front of them
+            const Bitboard pushers = pawn_single_push_bb(~c, pawns) & cPawns;
 
-            if (pt == PAWN)
+            auto process_pawn_attacks = [&](Bitboard attacks, Direction attkDir) {
+                while (attacks)
+                {
+                    Square to       = pop_lsb(attacks);
+                    Square from     = to - attkDir;
+                    Piece  attacked = pos.piece_on(to);
+                    assert(file_of(from) != file_of(to) || type_of(attacked) == PAWN);
+                    IndexType index = make_index(perspective, attacker, from, to, attacked, ksq);
+                    active.push_back_if_lt(index, Dimensions);
+                }
+            };
+
+            if (c == WHITE)
             {
-                auto right = (c == WHITE) ? NORTH_EAST : SOUTH_WEST;
-                auto left  = (c == WHITE) ? NORTH_WEST : SOUTH_EAST;
-                auto attacks_left =
-                  ((c == WHITE) ? shift<NORTH_EAST>(bb) : shift<SOUTH_WEST>(bb)) & occupied;
-                auto attacks_right =
-                  ((c == WHITE) ? shift<NORTH_WEST>(bb) : shift<SOUTH_EAST>(bb)) & occupied;
-
-                while (attacks_left)
-                {
-                    Square    to       = pop_lsb(attacks_left);
-                    Square    from     = to - right;
-                    Piece     attacked = pos.piece_on(to);
-                    IndexType index    = make_index(perspective, attacker, from, to, attacked, ksq);
-
-                    if (index < Dimensions)
-                        active.push_back(index);
-                }
-
-                while (attacks_right)
-                {
-                    Square    to       = pop_lsb(attacks_right);
-                    Square    from     = to - left;
-                    Piece     attacked = pos.piece_on(to);
-                    IndexType index    = make_index(perspective, attacker, from, to, attacked, ksq);
-
-                    if (index < Dimensions)
-                        active.push_back(index);
-                }
+                process_pawn_attacks(shift<NORTH_EAST>(cPawns) & occupied, NORTH_EAST);
+                process_pawn_attacks(shift<NORTH_WEST>(cPawns) & occupied, NORTH_WEST);
+                process_pawn_attacks(shift<NORTH>(pushers), NORTH);
             }
             else
             {
-                while (bb)
+                process_pawn_attacks(shift<SOUTH_WEST>(cPawns) & occupied, SOUTH_WEST);
+                process_pawn_attacks(shift<SOUTH_EAST>(cPawns) & occupied, SOUTH_EAST);
+                process_pawn_attacks(shift<SOUTH>(pushers), SOUTH);
+            }
+        }
+
+        for (PieceType pt = KNIGHT; pt < KING; ++pt)
+        {
+            Piece    attacker = make_piece(c, pt);
+            Bitboard bb       = pos.pieces(c, pt);
+            while (bb)
+            {
+                Square   from    = pop_lsb(bb);
+                Bitboard attacks = attacks_bb(pt, from, occupied) & occupied;
+                while (attacks)
                 {
-                    Square   from    = pop_lsb(bb);
-                    Bitboard attacks = (attacks_bb(pt, from, occupied)) & occupied;
-
-                    while (attacks)
-                    {
-                        Square    to       = pop_lsb(attacks);
-                        Piece     attacked = pos.piece_on(to);
-                        IndexType index =
-                          make_index(perspective, attacker, from, to, attacked, ksq);
-
-                        if (index < Dimensions)
-                            active.push_back(index);
-                    }
+                    Square    to       = pop_lsb(attacks);
+                    Piece     attacked = pos.piece_on(to);
+                    IndexType index    = make_index(perspective, attacker, from, to, attacked, ksq);
+                    active.push_back_if_lt(index, Dimensions);
                 }
             }
         }
@@ -307,8 +302,7 @@ void FullThreats::append_changed_indices(Color                   perspective,
                 else if (fusedData->dp2removedOriginBoard & to)
                     continue;
             }
-
-            if (to != SQ_NONE && to == fusedData->dp2removed)
+            else if (to != SQ_NONE && to == fusedData->dp2removed)
             {
                 if (add)
                 {
@@ -326,13 +320,10 @@ void FullThreats::append_changed_indices(Color                   perspective,
         auto&           insert = add ? added : removed;
         const IndexType index  = make_index(perspective, attacker, from, to, attacked, ksq);
 
-        if (index < Dimensions)
-        {
-            if (prefetchBase)
-                prefetch<PrefetchRw::READ, PrefetchLoc::LOW>(
-                  prefetchBase + static_cast<std::ptrdiff_t>(index) * prefetchStride);
-            insert.push_back(index);
-        }
+        if (prefetchBase)
+            prefetch<PrefetchRw::READ, PrefetchLoc::LOW>(reinterpret_cast<const void*>(
+              reinterpret_cast<uintptr_t>(prefetchBase) + index * prefetchStride));
+        insert.push_back_if_lt(index, Dimensions);
     }
 }
 

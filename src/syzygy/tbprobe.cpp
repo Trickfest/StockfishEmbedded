@@ -29,6 +29,7 @@
 #include <initializer_list>
 #include <iostream>
 #include <mutex>
+#include <optional>
 #include <sstream>
 #include <string_view>
 #include <sys/stat.h>
@@ -386,7 +387,16 @@ TBTable<WDL>::TBTable(const std::string& code) :
     StateInfo st;
     Position  pos;
 
-    key        = pos.set(code, WHITE, &st).material_key();
+    auto err = pos.set(code, WHITE, &st);
+    // IMPORTANT: We cannot assert here because it WILL produce validation errors
+    // on some TB7 and higher positions due to the black king being attacked
+    // while white is to move. This is not fixable without significant changes.
+    // As using pos.set here is already a very hacky way to achieve the desired
+    // result here so we leave it for now. The validation checks that fail are
+    // done after the position is fully set up, so it's fine for now.
+    // assert(!err.has_value());
+    (void) err;
+    key        = pos.material_key();
     pieceCount = pos.count<ALL_PIECES>();
     hasPawns   = pos.pieces(PAWN);
 
@@ -404,7 +414,16 @@ TBTable<WDL>::TBTable(const std::string& code) :
     pawnCount[0] = pos.count<PAWN>(c ? WHITE : BLACK);
     pawnCount[1] = pos.count<PAWN>(c ? BLACK : WHITE);
 
-    key2 = pos.set(code, BLACK, &st).material_key();
+    err = pos.set(code, BLACK, &st);
+    // IMPORTANT: We cannot assert here because it WILL produce validation errors
+    // on some TB7 and higher positions due to the black king being attacked
+    // while white is to move. This is not fixable without significant changes.
+    // As using pos.set here is already a very hacky way to achieve the desired
+    // result here so we leave it for now. The validation checks that fail are
+    // done after the position is fully set up, so it's fine for now.
+    // assert(!err.has_value());
+    (void) err;
+    key2 = pos.material_key();
 }
 
 template<>
@@ -930,8 +949,10 @@ encode_remaining:
         // groups (similar to what was done earlier for leading group pieces).
         for (int i = 0; i < d->groupLen[next]; ++i)
         {
-            auto f      = [&](Square s) { return groupSq[i] > s; };
-            auto adjust = std::count_if(squares, groupSq, f);
+            int adjust = 0;
+            DISABLE_CLANG_LOOP_VEC
+            for (Square* sq = squares; sq != groupSq; ++sq)
+                adjust += groupSq[i] > *sq;
             n += Binomial[i + 1][groupSq[i] - adjust - 8 * remainingPawns];
         }
 

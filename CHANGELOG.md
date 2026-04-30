@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-04-30
+### Changed
+- Updated vendored Stockfish subtree to upstream commit `1a882efc7fc22b3b16893a406e6060916022fcc4` (official `master` as of 2026-04-30).
+- Updated NNUE instructions to use `nn-f68ec79f0fe3.nnue` (big net) and `nn-47fc8b7fff06.nnue` (small net).
+- Clarified README wording around the engine worker thread.
+
 ## [1.2.0] - 2026-03-11
 ### Added
 - Added `SFEngineTests` XCTest harness with baseline coverage for wrapper contracts, perft node counts, tactical checks, and score-band assertions.

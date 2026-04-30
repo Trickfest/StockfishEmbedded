@@ -36,6 +36,8 @@ class Score;
 enum Square : uint8_t;
 using Value = int;
 
+constexpr auto StartFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
 class UCIEngine {
    public:
     UCIEngine(int argc, char** argv);
@@ -45,7 +47,7 @@ class UCIEngine {
     static int         to_cp(Value v, const Position& pos);
     static std::string format_score(const Score& s);
     static std::string square(Square s);
-    static std::string move(Move m, bool chess960);
+    static std::string move(Move m, bool chess960 = false);
     static std::string wdl(Value v, const Position& pos);
     static std::string to_lower(std::string str);
     static Move        to_move(const Position& pos, std::string str);
@@ -73,6 +75,9 @@ class UCIEngine {
     static void on_bestmove(std::string_view bestmove, std::string_view ponder);
 
     void init_search_update_listeners();
+
+    [[noreturn]] void terminate_on_critical_error(const std::string& fullCommand,
+                                                  const std::string& message);
 };
 
 }  // namespace Stockfish

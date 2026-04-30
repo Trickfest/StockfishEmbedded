@@ -87,8 +87,7 @@
     #if defined(USE_PEXT)
         #include <immintrin.h>  // Header for _pext_u64() intrinsic
         #define pext(b, m) _pext_u64(b, m)
-    #else
-        #define pext(b, m) 0
+        #define pdep(b, m) _pdep_u64(b, m)
     #endif
 
 namespace Stockfish {
@@ -220,11 +219,11 @@ using Depth = int;
 constexpr Depth DEPTH_QS = 0;
 // For transposition table entries where no searching at all was done
 // (whether regular or qsearch) we use DEPTH_UNSEARCHED, which should thus
-// compare lower than any quiescence or regular depth. DEPTH_ENTRY_OFFSET
-// is used only for the transposition table entry occupancy check (see tt.cpp),
-// and should thus be lower than DEPTH_UNSEARCHED.
-constexpr Depth DEPTH_UNSEARCHED   = -2;
-constexpr Depth DEPTH_ENTRY_OFFSET = -3;
+// compare lower than any quiescence or regular depth. DEPTH_NONE is used
+// for the transposition table entry occupancy check (see tt.cpp), and
+// should thus be lower than DEPTH_UNSEARCHED.
+constexpr Depth DEPTH_UNSEARCHED = -2;
+constexpr Depth DEPTH_NONE       = -3;
 
 // clang-format off
 enum Square : uint8_t {
@@ -330,8 +329,6 @@ struct DirtyThreats {
     DirtyThreatList list;
     Color           us;
     Square          prevKsq, ksq;
-
-    Bitboard threatenedSqs, threateningSqs;
 };
 
     #define ENABLE_INCR_OPERATORS_ON(T) \
@@ -472,6 +469,9 @@ class Move {
     struct MoveHash {
         std::size_t operator()(const Move& m) const { return make_key(m.data); }
     };
+
+    static constexpr int FromSqShift = 6;
+    static constexpr int ToSqShift   = 0;
 
    protected:
     std::uint16_t data;

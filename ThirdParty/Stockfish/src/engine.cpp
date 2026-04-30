@@ -48,9 +48,8 @@ namespace Stockfish {
 
 namespace NN = Eval::NNUE;
 
-constexpr auto StartFEN   = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-constexpr int  MaxHashMB  = Is64Bit ? 33554432 : 2048;
-int            MaxThreads = std::max(1024, 4 * int(get_hardware_concurrency()));
+constexpr int MaxHashMB  = Is64Bit ? 33554432 : 2048;
+int           MaxThreads = std::max(1024, 4 * int(get_hardware_concurrency()));
 
 // The default configuration will attempt to group L3 domains up to 32 threads.
 // This size was found to be a good balance between the Elo gain of increased
@@ -195,21 +194,26 @@ void Engine::set_on_verify_networks(std::function<void(std::string_view)>&& f) {
 
 void Engine::wait_for_search_finished() { threads.main_thread()->wait_for_search_finished(); }
 
-void Engine::set_position(const std::string& fen, const std::vector<std::string>& moves) {
+std::optional<PositionSetError> Engine::set_position(const std::string&              fen,
+                                                     const std::vector<std::string>& moves) {
     // Drop the old state and create a new one
-    states = StateListPtr(new std::deque<StateInfo>(1));
-    pos.set(fen, options["UCI_Chess960"], &states->back());
+    states   = StateListPtr(new std::deque<StateInfo>(1));
+    auto err = pos.set(fen, options["UCI_Chess960"], &states->back());
+    if (err.has_value())
+        return err;
 
     for (const auto& move : moves)
     {
         auto m = UCIEngine::to_move(pos, move);
 
         if (m == Move::none())
-            break;
+            return PositionSetError("Illegal move: " + move);
 
         states->emplace_back();
         pos.do_move(m, states->back());
     }
+
+    return std::nullopt;
 }
 
 // modifiers

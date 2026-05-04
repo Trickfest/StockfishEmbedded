@@ -56,11 +56,11 @@ void RunStockfishUCI(std::istream& in, std::ostream& out) {
         argv.push_back(arg.data());
 
     // Construct the UCI engine and initialize tuning/options.
-    UCIEngine uci(static_cast<int>(argv.size()), argv.data());
-    Tune::init(uci.engine_options());
+    auto uci = std::make_unique<UCIEngine>(static_cast<int>(argv.size()), argv.data());
+    Tune::init(uci->engine_options());
 
     // Blocking UCI loop; returns when "quit" is received or input closes.
-    uci.loop();
+    uci->loop();
 }
 
 }  // namespace SFEmbedded

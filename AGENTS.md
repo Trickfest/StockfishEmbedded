@@ -12,11 +12,70 @@ wrapped by a small Objective-C API (`SFEngine`) that is safe to call from Swift.
 - `Resources/Soak/` – default soak test positions.
 
 ## Required assets
-NNUE weights are not in Git. Download both nets before building:
+NNUE weights are not in Git. Download the required net before building:
 ```
 mkdir -p Resources/NNUE
-curl -L --fail https://tests.stockfishchess.org/api/nn/nn-f68ec79f0fe3.nnue -o Resources/NNUE/nn-f68ec79f0fe3.nnue
-curl -L --fail https://tests.stockfishchess.org/api/nn/nn-47fc8b7fff06.nnue -o Resources/NNUE/nn-47fc8b7fff06.nnue
+curl -L --fail https://tests.stockfishchess.org/api/nn/nn-fcf986aea78a.nnue -o Resources/NNUE/nn-fcf986aea78a.nnue
+```
+
+## Updating vendored Stockfish
+Stockfish is vendored in `ThirdParty/Stockfish` with `git subtree --squash`.
+Keep upstream Stockfish sources unmodified; make repo-specific integration changes
+only in this repo's wrapper/build files.
+
+1. Ensure the official upstream remote exists and is fresh:
+```
+git remote get-url stockfish
+git fetch stockfish master
+git log -1 --oneline stockfish/master
+```
+If the `stockfish` remote is missing, add it first:
+```
+git remote add stockfish https://github.com/official-stockfish/Stockfish.git
+git fetch stockfish master
+```
+
+2. Record the current subtree split and how far behind it is:
+```
+git log --grep='git-subtree-dir: ThirdParty/Stockfish' --pretty=format:'%B' -n 1
+git rev-list --count <git-subtree-split>..stockfish/master
+```
+
+3. Pull the latest official Stockfish `master` into the vendored subtree:
+```
+git subtree pull --prefix ThirdParty/Stockfish stockfish master --squash
+```
+
+4. Audit the embedded UCI shim against upstream `main.cpp`:
+```
+git show stockfish/master:src/main.cpp
+```
+Compare Stockfish's initialization sequence with
+`Sources/SFEngine/EmbeddedUCI.cpp`. Port any new or removed setup steps while
+preserving the repo-specific stream redirection, fake `argv`, and embedded
+entry point. This shim intentionally mimics Stockfish `main()` before calling
+`UCIEngine::loop()`.
+
+5. Check whether Stockfish changed its required NNUE files:
+```
+rg -n 'EvalFileDefaultName|nn-[a-f0-9]+\.nnue' ThirdParty/Stockfish/src
+```
+Download any new required nets into `Resources/NNUE/` and update this file,
+`README.md`, and `Resources/NNUE/README.md` if the filenames changed.
+
+6. Build and run smoke tests after the subtree and shim updates:
+```
+xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngine-macOS -configuration Debug -destination 'platform=macOS,arch=arm64' -derivedDataPath build
+xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineCLITestObjC -configuration Debug -destination 'platform=macOS,arch=arm64' -derivedDataPath build
+./build/Build/Products/Debug/SFEngineCLITestObjC
+xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineCLITestSwift -configuration Debug -destination 'platform=macOS,arch=arm64' -derivedDataPath build
+./build/Build/Products/Debug/SFEngineCLITestSwift
+```
+
+7. Run a short soak test when smoke tests pass:
+```
+xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineCLISoakTestSwift -configuration Debug -destination 'platform=macOS,arch=arm64' -derivedDataPath build
+./build/Build/Products/Debug/SFEngineCLISoakTestSwift --iterations 5 --movetime 500
 ```
 
 ## Build (Xcode)

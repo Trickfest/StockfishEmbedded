@@ -21,14 +21,13 @@ git clone <repo-url>
 - `Resources/Soak` – default FEN position files for soak tests.
 
 ## NNUE weights (required immediately after clone)
-To keep the repo binary-free (and because GitHub blocks files >100 MB), the NNUE nets are **not in Git**. Use the Stockfish test server and download both nets before you build or run anything:
+To keep the repo binary-free (and because GitHub blocks files >100 MB), the NNUE net is **not in Git**. Use the Stockfish test server and download the required net before you build or run anything:
 ```
 mkdir -p Resources/NNUE
-curl -L --fail https://tests.stockfishchess.org/api/nn/nn-f68ec79f0fe3.nnue -o Resources/NNUE/nn-f68ec79f0fe3.nnue
-curl -L --fail https://tests.stockfishchess.org/api/nn/nn-47fc8b7fff06.nnue -o Resources/NNUE/nn-47fc8b7fff06.nnue
+curl -L --fail https://tests.stockfishchess.org/api/nn/nn-fcf986aea78a.nnue -o Resources/NNUE/nn-fcf986aea78a.nnue
 ```
 
-If you prefer, you can run `ThirdParty/Stockfish/scripts/net.sh` (from within `ThirdParty/Stockfish/src`), then copy the downloaded `.nnue` files into `Resources/NNUE`.
+If you prefer, you can run `ThirdParty/Stockfish/scripts/net.sh` (from within `ThirdParty/Stockfish/src`), then copy the downloaded `.nnue` file into `Resources/NNUE`.
 
 ## Building
 ### Xcode
@@ -119,9 +118,9 @@ Key points:
 - Updates are explicit and reviewable; there is no submodule.
 - Updating Stockfish is a single, squashed subtree pull from upstream.
 - The upstream commit hash is recorded in the subtree metadata lines in the update commit message.
-- Current vendored upstream commit: `b3a810a1c4201059bb97f6917df3276c03167a50`.
+- Current vendored upstream commit: `5095cd16c97e7596f2d2a02eb05ed8e030af991f`.
 - If Stockfish changes the default NNUE filenames, revisit the NNUE section above and download the matching nets.
-  You can confirm the required filenames in `ThirdParty/Stockfish/src/evaluate.h` (`EvalFileDefaultNameBig` / `EvalFileDefaultNameSmall`).
+  You can confirm the required filename in `ThirdParty/Stockfish/src/evaluate.h` (`EvalFileDefaultName`).
 - Warning: Updating Stockfish (to `master` or a release tag) can break the parent repo's shim or build setup due to upstream API or initialization changes. If a build fails after an update, you may need to adjust the wrapper code in `Sources/SFEngine` to match the new Stockfish expectations.
 - Typical update workflow: fetch upstream, pull the subtree with `--squash`, check if the NNUE filenames changed, download any new nets, then build the CLI/SwiftUI smoke tests. If you see build errors in `Sources/SFEngine`, update the shim to match Stockfish's current initialization path.
 - Even if the project successfully compiles, compare the current Stockfish `main.cpp` initialization sequence with the shim in `Sources/SFEngine/EmbeddedUCI.cpp` to catch new (or deleted) init steps that could affect runtime behavior.

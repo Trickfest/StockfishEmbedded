@@ -782,3 +782,93 @@ final class SFEngineTests: XCTestCase {
         return validBestmoveRegex.firstMatch(in: token, options: [], range: range) != nil
     }
 }
+
+final class EmbeddedUCIParityTests: XCTestCase {
+    func testEmbeddedUCIStartupLifecycleMatchesVendoredMain() throws {
+        let repositoryRoot = try Self.repositoryRoot()
+        let mainSource = try String(
+            contentsOf: repositoryRoot.appendingPathComponent("ThirdParty/Stockfish/src/main.cpp"),
+            encoding: .utf8
+        )
+        let shimSource = try String(
+            contentsOf: repositoryRoot.appendingPathComponent("Sources/SFEngine/EmbeddedUCI.cpp"),
+            encoding: .utf8
+        )
+
+        let mainLifecycle = Self.extractStartupLifecycle(from: mainSource)
+        let shimLifecycle = Self.extractStartupLifecycle(from: shimSource)
+
+        XCTAssertEqual(mainLifecycle.last, "UCIEngine loop")
+        XCTAssertEqual(shimLifecycle.last, "UCIEngine loop")
+        XCTAssertEqual(
+            shimLifecycle,
+            mainLifecycle,
+            "EmbeddedUCI.cpp must mirror the vendored Stockfish main.cpp startup lifecycle."
+        )
+    }
+
+    private static func repositoryRoot(filePath: String = #filePath) throws -> URL {
+        var url = URL(fileURLWithPath: filePath)
+        for _ in 0..<3 {
+            url.deleteLastPathComponent()
+        }
+
+        let marker = url.appendingPathComponent("ThirdParty/Stockfish/src/main.cpp")
+        guard FileManager.default.fileExists(atPath: marker.path) else {
+            throw RepositoryLayoutError.missingVendoredMain(marker.path)
+        }
+        return url
+    }
+
+    private static func extractStartupLifecycle(from source: String) -> [String] {
+        var lifecycle: [String] = []
+        var isCapturing = false
+
+        for rawLine in source.components(separatedBy: .newlines) {
+            let line = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !line.isEmpty, !line.hasPrefix("//") else {
+                continue
+            }
+
+            if line.contains("std::cout << engine_info()") {
+                isCapturing = true
+                lifecycle.append("engine_info banner")
+                continue
+            }
+
+            guard isCapturing else {
+                continue
+            }
+
+            if line.contains("Bitboards::init()") {
+                lifecycle.append("Bitboards::init")
+            } else if line.contains("Position::init()") {
+                lifecycle.append("Position::init")
+            } else if line.contains("std::make_unique<UCIEngine>") {
+                lifecycle.append("UCIEngine heap construction")
+            } else if line.range(of: #"^UCIEngine\s+\w+\("#, options: .regularExpression) != nil {
+                lifecycle.append("UCIEngine stack construction")
+            } else if line.contains("Tune::init") && line.contains("engine_options") {
+                lifecycle.append("Tune::init engine options")
+            } else if line.range(of: #"\buci(->|\.)loop\(\);"#, options: .regularExpression) != nil {
+                lifecycle.append("UCIEngine loop")
+                break
+            } else if line.hasPrefix("return ")
+                        || line.hasPrefix("for ")
+                        || line == "{"
+                        || line == "}"
+                        || line.contains("argv") {
+                continue
+            } else {
+                // Preserve unknown setup statements so upstream additions fail until mirrored here.
+                lifecycle.append(line)
+            }
+        }
+
+        return lifecycle
+    }
+
+    private enum RepositoryLayoutError: Error {
+        case missingVendoredMain(String)
+    }
+}

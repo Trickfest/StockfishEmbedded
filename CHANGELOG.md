@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+### Added
+- Added an `EmbeddedUCI` parity regression test that compares the wrapper startup lifecycle against the vendored Stockfish `main.cpp` path.
 
 ## [1.4.0] - 2026-05-04
 ### Changed

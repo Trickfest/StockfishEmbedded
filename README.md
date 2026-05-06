@@ -118,7 +118,7 @@ Key points:
 - Updates are explicit and reviewable; there is no submodule.
 - Updating Stockfish is a single, squashed subtree pull from upstream.
 - The upstream commit hash is recorded in the subtree metadata lines in the update commit message.
-- Current vendored upstream commit: `5095cd16c97e7596f2d2a02eb05ed8e030af991f`.
+- Current vendored upstream commit: `1a882efc7fc22b3b16893a406e6060916022fcc4`.
 - If Stockfish changes the default NNUE filenames, revisit the NNUE section above and download the matching nets.
   You can confirm the required filename in `ThirdParty/Stockfish/src/evaluate.h` (`EvalFileDefaultName`).
 - Warning: Updating Stockfish (to `master` or a release tag) can break the parent repo's shim or build setup due to upstream API or initialization changes. If a build fails after an update, you may need to adjust the wrapper code in `Sources/SFEngine` to match the new Stockfish expectations.
@@ -130,9 +130,9 @@ To see the most recent subtree update commit (and upstream SHA):
 git log -1 --pretty=%B -- ThirdParty/Stockfish
 ```
 
-To pin to an official release tag (example: `sf_17.1`):
+To pin to an official release tag (example: `sf_18`):
 ```
-git subtree pull --prefix ThirdParty/Stockfish https://github.com/official-stockfish/Stockfish.git sf_17.1 --squash
+git subtree pull --prefix ThirdParty/Stockfish https://github.com/official-stockfish/Stockfish.git sf_18 --squash
 ```
 
 To update to the latest commit on `master`:

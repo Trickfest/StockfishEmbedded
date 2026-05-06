@@ -63,7 +63,20 @@ rg -n 'EvalFileDefaultName|nn-[a-f0-9]+\.nnue' ThirdParty/Stockfish/src
 Download any new required nets into `Resources/NNUE/` and update this file,
 `README.md`, and `Resources/NNUE/README.md` if the filenames changed.
 
-6. Build and run smoke tests after the subtree and shim updates:
+6. Refresh versioning documentation for the new snapshot:
+```
+git log --grep='git-subtree-dir: ThirdParty/Stockfish' --pretty=format:'%B' -n 1
+rg -n '<old-subtree-split>|sf_[0-9]|Stockfish [0-9]|snapshot|Current vendored upstream commit' README.md Resources/NNUE/README.md
+```
+Replace `<old-subtree-split>` with the split recorded before the subtree pull.
+Update `README.md`'s "Stockfish versioning" section so `Current vendored
+upstream commit` matches the new `git-subtree-split` line. Also check nearby
+versioning examples and release/snapshot wording so they do not keep pointing
+at the previous pre-update snapshot or an obsolete release tag. Historical
+`CHANGELOG.md` entries should keep the SHAs from their original releases; update
+only the new/current changelog entry if you add one for the Stockfish update.
+
+7. Build and run smoke tests after the subtree and shim updates:
 ```
 xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngine-macOS -configuration Debug -destination 'platform=macOS,arch=arm64' -derivedDataPath build
 xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineCLITestObjC -configuration Debug -destination 'platform=macOS,arch=arm64' -derivedDataPath build
@@ -72,7 +85,7 @@ xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineCLITestSwift -co
 ./build/Build/Products/Debug/SFEngineCLITestSwift
 ```
 
-7. Run a short soak test when smoke tests pass:
+8. Run a short soak test when smoke tests pass:
 ```
 xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineCLISoakTestSwift -configuration Debug -destination 'platform=macOS,arch=arm64' -derivedDataPath build
 ./build/Build/Products/Debug/SFEngineCLISoakTestSwift --iterations 5 --movetime 500

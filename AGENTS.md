@@ -35,11 +35,18 @@ git remote add stockfish https://github.com/official-stockfish/Stockfish.git
 git fetch stockfish master
 ```
 
-2. Record the current subtree split and how far behind it is:
+2. Check the actual vendored tree before treating subtree metadata as current:
 ```
 git log --grep='git-subtree-dir: ThirdParty/Stockfish' --pretty=format:'%B' -n 1
+git diff --quiet 'stockfish/master^{tree}' HEAD:ThirdParty/Stockfish && echo "vendored tree matches stockfish/master"
+git diff --stat 'stockfish/master^{tree}' HEAD:ThirdParty/Stockfish
 git rev-list --count <git-subtree-split>..stockfish/master
 ```
+If the tree comparison succeeds, the vendored source is 0 commits behind
+`stockfish/master` even if the last `git-subtree-split` line points at an older
+upstream commit. Use the `git-subtree-split` count as metadata freshness only
+after checking the actual tree; it can be stale when a vendoring update was
+committed manually instead of through `git subtree pull`.
 
 3. Pull the latest official Stockfish `master` into the vendored subtree:
 ```

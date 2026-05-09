@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 - Added an `EmbeddedUCI` parity regression test that compares the wrapper startup lifecycle against the vendored Stockfish `main.cpp` path.
 
+### Changed
+- Clarified the vendored Stockfish update instructions to compare the actual `ThirdParty/Stockfish` tree against upstream before using subtree metadata to report how far the vendored source is behind.
+
 ## [1.4.0] - 2026-05-04
 ### Changed
 - Updated vendored Stockfish subtree to upstream commit `5095cd16c97e7596f2d2a02eb05ed8e030af991f` (official `master` as of 2026-05-04).

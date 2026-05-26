@@ -15,7 +15,7 @@ wrapped by a small Objective-C API (`SFEngine`) that is safe to call from Swift.
 NNUE weights are not in Git. Download the required net before building:
 ```
 mkdir -p Resources/NNUE
-curl -L --fail https://tests.stockfishchess.org/api/nn/nn-fcf986aea78a.nnue -o Resources/NNUE/nn-fcf986aea78a.nnue
+curl -L --fail https://tests.stockfishchess.org/api/nn/nn-83a0d6daf7e5.nnue -o Resources/NNUE/nn-83a0d6daf7e5.nnue
 ```
 
 ## Updating vendored Stockfish

@@ -9,6 +9,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added an `EmbeddedUCI` parity regression test that compares the wrapper startup lifecycle against the vendored Stockfish `main.cpp` path.
 
 ### Changed
+- Updated vendored Stockfish subtree to upstream commit `77a8f6ccf31846d63452f79e143fbc6dc62ae3a8` (official `master` as of 2026-05-25).
+- Updated NNUE instructions to use `nn-83a0d6daf7e5.nnue`.
+- Updated the embedded UCI shim to mirror Stockfish's new `Attacks::init()` startup step.
 - Clarified the vendored Stockfish update instructions to compare the actual `ThirdParty/Stockfish` tree against upstream before using subtree metadata to report how far the vendored source is behind.
 
 ## [1.4.0] - 2026-05-04

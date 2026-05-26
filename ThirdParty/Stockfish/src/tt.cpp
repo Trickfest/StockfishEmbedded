@@ -18,11 +18,14 @@
 
 #include "tt.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <numeric>
+#include <vector>
 
 #include "memory.h"
 #include "misc.h"
@@ -75,6 +78,7 @@ struct TTEntry {
 
    private:
     friend class TranspositionTable;
+    friend struct TTWriter;
 
     uint16_t key16;
     uint8_t  depth8;
@@ -107,6 +111,16 @@ void TTEntry::save(
         value16   = int16_t(v);
         eval16    = int16_t(ev);
     }
+    // Secondary aging. Important for elementary mate finding.
+    // (*Scaler) Secondary aging on entries relevant to singular extensions
+    // generally scales poorly and requires VVLTC verification.
+    else if (depth8 + DEPTH_NONE >= 5
+             && Bound((genBound8 & BOUND_MASK) >> BOUND_SHIFT) != BOUND_EXACT)
+    {
+        auto v16 = value16;
+        if (std::abs(v16) < VALUE_INFINITE && is_decisive(v16))
+            depth8--;
+    }
 }
 
 
@@ -126,6 +140,8 @@ void TTWriter::write(
   Key k, Value v, bool pv, Bound b, Depth d, Move m, Value ev, uint8_t curr_generation) {
     entry->save(k, v, pv, b, d, m, ev, curr_generation);
 }
+
+void TTWriter::penalize(int penalty) { entry->depth8 -= penalty; }
 
 
 // A TranspositionTable is an array of Cluster, of size clusterCount. Each cluster consists of ClusterSize number
@@ -148,9 +164,14 @@ static_assert(sizeof(Cluster) == 32, "Suboptimal Cluster size");
 void TranspositionTable::resize(size_t mbSize, ThreadPool& threads) {
     aligned_large_pages_free(table);
 
-    clusterCount = mbSize * 1024 * 1024 / sizeof(Cluster);
+    clusterCount   = mbSize * 1024 * 1024 / sizeof(Cluster);
+    size_t ttBytes = clusterCount * sizeof(Cluster);
 
-    table = static_cast<Cluster*>(aligned_large_pages_alloc(clusterCount * sizeof(Cluster)));
+    // Request 1GB pages if we'd get at least eight per NUMA node, to avoid
+    // memory oversubscription
+    bool hugePageHint = ttBytes >= threads.numa_nodes() * HugePageSize * 8;
+
+    table = static_cast<Cluster*>(aligned_large_pages_alloc_with_hint(ttBytes, hugePageHint));
 
     if (!table)
     {
@@ -168,9 +189,23 @@ void TranspositionTable::clear(ThreadPool& threads) {
     generation8              = 0;
     const size_t threadCount = threads.num_threads();
 
+    std::vector<size_t> threadToNuma = threads.get_bound_thread_to_numa_node();
+
+    std::vector<size_t> order(threadCount);
+    std::iota(order.begin(), order.end(), 0);
+
+    // To promote good NUMA distribution (esp. with huge pages), we permute threads so that
+    // all threads in a NUMA node clear a contiguous region of the TT.
+    if (threadToNuma.size() == threadCount)
+    {
+        std::stable_sort(order.begin(), order.end(), [&threadToNuma](size_t t1, size_t t2) {
+            return threadToNuma.at(t1) < threadToNuma.at(t2);
+        });
+    }
+
     for (size_t i = 0; i < threadCount; ++i)
     {
-        threads.run_on_thread(i, [this, i, threadCount]() {
+        threads.run_on_thread(order[i], [this, i, threadCount]() {
             // Each thread will zero its part of the hash table
             const size_t stride = clusterCount / threadCount;
             const size_t start  = stride * i;

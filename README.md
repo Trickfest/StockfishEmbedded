@@ -24,7 +24,7 @@ git clone <repo-url>
 To keep the repo binary-free (and because GitHub blocks files >100 MB), the NNUE net is **not in Git**. Use the Stockfish test server and download the required net before you build or run anything:
 ```
 mkdir -p Resources/NNUE
-curl -L --fail https://tests.stockfishchess.org/api/nn/nn-fcf986aea78a.nnue -o Resources/NNUE/nn-fcf986aea78a.nnue
+curl -L --fail https://tests.stockfishchess.org/api/nn/nn-83a0d6daf7e5.nnue -o Resources/NNUE/nn-83a0d6daf7e5.nnue
 ```
 
 If you prefer, you can run `ThirdParty/Stockfish/scripts/net.sh` (from within `ThirdParty/Stockfish/src`), then copy the downloaded `.nnue` file into `Resources/NNUE`.
@@ -118,7 +118,7 @@ Key points:
 - Updates are explicit and reviewable; there is no submodule.
 - Updating Stockfish is a single, squashed subtree pull from upstream.
 - The upstream commit hash is recorded in the subtree metadata lines in the update commit message.
-- Current vendored upstream commit: `1a882efc7fc22b3b16893a406e6060916022fcc4`.
+- Current vendored upstream commit: `77a8f6ccf31846d63452f79e143fbc6dc62ae3a8`.
 - If Stockfish changes the default NNUE filenames, revisit the NNUE section above and download the matching nets.
   You can confirm the required filename in `ThirdParty/Stockfish/src/evaluate.h` (`EvalFileDefaultName`).
 - Warning: Updating Stockfish (to `master` or a release tag) can break the parent repo's shim or build setup due to upstream API or initialization changes. If a build fails after an update, you may need to adjust the wrapper code in `Sources/SFEngine` to match the new Stockfish expectations.

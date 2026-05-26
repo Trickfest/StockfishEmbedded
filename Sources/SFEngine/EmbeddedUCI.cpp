@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "attacks.h"
 #include "bitboard.h"
 #include "misc.h"
 #include "position.h"
@@ -46,6 +47,7 @@ void RunStockfishUCI(std::istream& in, std::ostream& out) {
 
     // Mimic Stockfish's main() setup so evaluation tables and options are ready.
     Bitboards::init();
+    Attacks::init();
     Position::init();
 
     // Stockfish expects argc/argv in its UCIEngine constructor; fake them.

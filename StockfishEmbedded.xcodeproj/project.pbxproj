@@ -25,6 +25,7 @@
 		A1F000000000000000000308 /* nnue_misc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000208 /* nnue_misc.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		A1F000000000000000000309 /* misc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000209 /* misc.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		A1F00000000000000000030A /* bitboard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F00000000000000000020A /* bitboard.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000319 /* attacks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000217 /* attacks.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		A1F00000000000000000030B /* score.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F00000000000000000020B /* score.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		A1F00000000000000000030C /* benchmark.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F00000000000000000020C /* benchmark.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		A1F00000000000000000030D /* movepick.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F00000000000000000020D /* movepick.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
@@ -51,6 +52,7 @@
 		A1F000000000000000000388 /* nnue_misc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000208 /* nnue_misc.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		A1F000000000000000000389 /* misc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000209 /* misc.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		A1F00000000000000000038A /* bitboard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F00000000000000000020A /* bitboard.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000399 /* attacks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000217 /* attacks.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		A1F00000000000000000038B /* score.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F00000000000000000020B /* score.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		A1F00000000000000000038C /* benchmark.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F00000000000000000020C /* benchmark.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		A1F00000000000000000038D /* movepick.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F00000000000000000020D /* movepick.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
@@ -151,6 +153,7 @@
 		A1F000000000000000000208 /* nnue_misc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = nnue_misc.cpp; sourceTree = "<group>"; };
 		A1F000000000000000000209 /* misc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = misc.cpp; sourceTree = "<group>"; };
 		A1F00000000000000000020A /* bitboard.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = bitboard.cpp; sourceTree = "<group>"; };
+		A1F000000000000000000217 /* attacks.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = attacks.cpp; sourceTree = "<group>"; };
 		A1F00000000000000000020B /* score.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = score.cpp; sourceTree = "<group>"; };
 		A1F00000000000000000020C /* benchmark.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = benchmark.cpp; sourceTree = "<group>"; };
 		A1F00000000000000000020D /* movepick.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = movepick.cpp; sourceTree = "<group>"; };
@@ -315,6 +318,7 @@
 				A1F000000000000000000203 /* ucioption.cpp */,
 				A1F000000000000000000209 /* misc.cpp */,
 				A1F00000000000000000020A /* bitboard.cpp */,
+				A1F000000000000000000217 /* attacks.cpp */,
 				A1F00000000000000000020B /* score.cpp */,
 				A1F00000000000000000020C /* benchmark.cpp */,
 				A1F00000000000000000020D /* movepick.cpp */,
@@ -623,6 +627,7 @@
 				A1F000000000000000000308 /* nnue_misc.cpp in Sources */,
 				A1F000000000000000000309 /* misc.cpp in Sources */,
 				A1F00000000000000000030A /* bitboard.cpp in Sources */,
+				A1F000000000000000000319 /* attacks.cpp in Sources */,
 				A1F00000000000000000030B /* score.cpp in Sources */,
 				A1F00000000000000000030C /* benchmark.cpp in Sources */,
 				A1F00000000000000000030D /* movepick.cpp in Sources */,
@@ -655,6 +660,7 @@
 				A1F000000000000000000388 /* nnue_misc.cpp in Sources */,
 				A1F000000000000000000389 /* misc.cpp in Sources */,
 				A1F00000000000000000038A /* bitboard.cpp in Sources */,
+				A1F000000000000000000399 /* attacks.cpp in Sources */,
 				A1F00000000000000000038B /* score.cpp in Sources */,
 				A1F00000000000000000038C /* benchmark.cpp in Sources */,
 				A1F00000000000000000038D /* movepick.cpp in Sources */,

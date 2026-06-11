@@ -131,6 +131,9 @@ xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineCLISoakTestSwift
 - Stockfish sources are vendored via `git subtree` and kept unmodified.
 - `SFEngine` is intended for single start/stop per instance.
 - Bitcode is disabled for iOS builds.
+- Keep standardized GPL source headers on this repo's owned wrapper, smoke-test,
+  and test sources. Do not rewrite or normalize headers inside
+  `ThirdParty/Stockfish`; those files belong to upstream Stockfish.
 
 ## License
 GPL-3.0. Using the static library in a distributed app generally requires the entire app

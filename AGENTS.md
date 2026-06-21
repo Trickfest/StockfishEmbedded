@@ -68,7 +68,10 @@ entry point. This shim intentionally mimics Stockfish `main()` before calling
 rg -n 'EvalFileDefaultName|nn-[a-f0-9]+\.nnue' ThirdParty/Stockfish/src
 ```
 Download any new required nets into `Resources/NNUE/` and update this file,
-`README.md`, and `Resources/NNUE/README.md` if the filenames changed.
+delete obsolete local `.nnue` files that are no longer referenced by the
+current Stockfish snapshot, and update this file, `README.md`, and
+`Resources/NNUE/README.md` if the filenames changed. NNUE files are ignored
+local assets and should not be committed.
 
 6. Refresh versioning documentation for the new snapshot:
 ```

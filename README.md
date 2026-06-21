@@ -35,7 +35,10 @@ If you prefer, you can run `ThirdParty/Stockfish/scripts/net.sh` (from within `T
 2. Build `SFEngine-iOS` for device or simulator, or `SFEngine-macOS` for macOS to produce `libSFEngine-*.a`.
 3. Build/run `SFEngineCLITestObjC` or `SFEngineCLITestSwift` (macOS) to run the minimal UCI smoke tests.
 4. Build/run `SFEngineTestSwiftUI` (iOS/iPadOS) for the SwiftUI smoke test app.
-Note: Building `SFEngineTestSwiftUI` for device requires selecting a Development Team in Xcode (Signing & Capabilities).
+
+Note: Running `SFEngineTestSwiftUI` on a device requires selecting a Development
+Team in Xcode (Signing & Capabilities). For command-line build-only checks,
+disable code signing as shown below.
 
 ### Command line
 ```
@@ -60,8 +63,8 @@ xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineCLISoakTestSwift
 # macOS XCTest harness
 xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineTests -configuration Debug -destination 'platform=macOS,arch=arm64' -derivedDataPath build test
 
-# iOS/iPadOS SwiftUI smoke test (build only)
-xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineTestSwiftUI -configuration Debug -destination 'generic/platform=iOS' -derivedDataPath build
+# iOS/iPadOS SwiftUI smoke test (unsigned build only)
+xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineTestSwiftUI -configuration Debug -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
 ```
 
 Tip: If you see stale-file warnings after switching build output locations, delete `build/` or clean DerivedData.

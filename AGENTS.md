@@ -102,7 +102,9 @@ xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineCLISoakTestSwift
 1. Open `StockfishEmbedded.xcodeproj`.
 2. Build `SFEngine-iOS` or `SFEngine-macOS` for static libs.
 3. Run `SFEngineCLITestObjC` or `SFEngineCLITestSwift` for smoke tests.
-4. Run `SFEngineTestSwiftUI` for the iOS/iPadOS smoke app.
+4. Run `SFEngineTestSwiftUI` for the iOS/iPadOS smoke app. Generic device
+   builds of the app require a Development Team unless code signing is disabled
+   for build-only validation.
 
 ## Build (CLI)
 ```
@@ -119,6 +121,9 @@ xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineCLITestObjC -con
 # macOS CLI smoke test (Swift)
 xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineCLITestSwift -configuration Debug -destination 'platform=macOS,arch=arm64' -derivedDataPath build
 ./build/Build/Products/Debug/SFEngineCLITestSwift
+
+# iOS/iPadOS SwiftUI smoke test (unsigned build only)
+xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineTestSwiftUI -configuration Debug -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
 ```
 
 ## Soak tests (CLI)

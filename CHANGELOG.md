@@ -5,7 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+
+No unreleased changes.
+
+## [1.5.1] - 2026-06-21
+
 ### Changed
+- Added a README reference to `SwiftChessDemo` showing how
+  `StockfishEmbedded` combines with `SwiftChessTools` in a realistic iOS chess
+  app.
 - Clarified the unsigned command-line build path for the iOS/iPadOS SwiftUI
   smoke app when a Development Team is not configured.
 - Standardized GPL source headers across owned wrapper, smoke-test, and test

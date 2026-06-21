@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 ### Changed
+- Clarified the unsigned command-line build path for the iOS/iPadOS SwiftUI
+  smoke app when a Development Team is not configured.
 - Standardized GPL source headers across owned wrapper, smoke-test, and test
   sources while leaving vendored Stockfish files untouched.
 

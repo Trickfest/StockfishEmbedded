@@ -7,6 +7,21 @@ Clone normally; Stockfish sources are vendored in-tree:
 git clone <repo-url>
 ```
 
+## Reference App
+
+For a realistic iOS app that uses this engine wrapper, see
+[SwiftChessDemo](https://github.com/Trickfest/SwiftChessDemo). The demo combines
+`StockfishEmbedded` with
+[SwiftChessTools](https://github.com/Trickfest/SwiftChessTools) to show a
+playable SwiftUI chess app with app-owned game state, legal move validation,
+serialized Stockfish searches, UCI parsing, evaluation display, move
+suggestions, move history, and engine status feedback.
+
+`StockfishEmbedded` provides the embedded engine bridge only; reusable chess
+rules, notation, SwiftUI board UI, and UCI helper types live in
+`SwiftChessTools`. Distributed apps that link this project must comply with
+Stockfish's GPL-3.0 licensing requirements.
+
 ## Layout
 - `StockfishEmbedded.xcodeproj` – Xcode project with static library targets (`SFEngine-iOS`, `SFEngine-macOS`), smoke tests (`SFEngineCLITestObjC`, `SFEngineCLITestSwift`, `SFEngineTestSwiftUI`), and soak components (`SFEngineSoak` runner + `SFEngineCLISoakTestSwift`).
 - `Sources/SFEngine` – adapter layer (ObjC++ wrapper and stream/queue helpers).

@@ -36,7 +36,21 @@ Stockfish's GPL-3.0 licensing requirements.
 - `Resources/Soak` – default FEN position files for soak tests.
 
 ## NNUE weights (required immediately after clone)
-To keep the repo binary-free (and because GitHub blocks files >100 MB), the NNUE net is **not in Git**. Use the Stockfish test server and download the required net before you build or run anything:
+To keep the repo binary-free (and because GitHub blocks files >100 MB), the
+NNUE net is **not in Git**. Before building or running the engine, download the
+network expected by the vendored Stockfish snapshot:
+
+```
+Scripts/download-nnue.sh
+```
+
+The script reads Stockfish's current `EvalFileDefaultName` from
+`ThirdParty/Stockfish/src/evaluate.h`, downloads the matching network from the
+Stockfish test server, and stores it in `Resources/NNUE`. Re-running the script
+is safe; it skips the download when the expected file is already present.
+
+If you prefer to run the commands manually, use the filename reported in
+`ThirdParty/Stockfish/src/evaluate.h`:
 ```
 mkdir -p Resources/NNUE
 curl -L --fail https://tests.stockfishchess.org/api/nn/nn-71d6d32cb962.nnue -o Resources/NNUE/nn-71d6d32cb962.nnue

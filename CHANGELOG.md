@@ -6,7 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-No unreleased changes.
+### Added
+
+- Added `Scripts/download-nnue.sh` to download the NNUE file required by the
+  current vendored Stockfish snapshot.
+
+### Changed
+
+- Updated NNUE setup docs to use the helper script as the primary setup path.
 
 ## [1.6.0] - 2026-06-21
 

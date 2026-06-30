@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.6.2] - 2026-06-29
+
 ### Fixed
 
 - Detach `std::cin` from `std::cout` while Stockfish runs against

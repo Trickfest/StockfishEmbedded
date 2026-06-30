@@ -13,8 +13,6 @@
 #import "SFEngine.h"
 
 #include <atomic>
-#include <chrono>
-#include <future>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -42,9 +40,6 @@ using namespace SFEmbedded;
     std::mutex                    _sendMutex;
     // Atomic running flag used to gate start/stop.
     std::atomic<bool>             _running;
-    // Signals when the engine loop exits, used to avoid blocking forever.
-    std::promise<void>            _donePromise;
-    std::future<void>             _doneFuture;
 }
 
 - (instancetype)initWithLineHandler:(SFLineHandler)handler {
@@ -66,10 +61,6 @@ using namespace SFEmbedded;
     bool wasRunning = _running.exchange(true);
     if (wasRunning)
         return;
-
-    // Reset the completion signal for this run.
-    _donePromise = std::promise<void>();
-    _doneFuture  = _donePromise.get_future();
 
     __weak typeof(self) weakSelf = self;
     _engineThread.reset(new std::thread([weakSelf] {
@@ -105,14 +96,9 @@ using namespace SFEmbedded;
     }
 
     if (_engineThread && _engineThread->joinable()) {
-        // Wait briefly for the UCI loop to exit; detach if it hangs.
-        if (_doneFuture.valid()
-            && _doneFuture.wait_for(std::chrono::seconds(2))
-                 == std::future_status::timeout) {
-            _engineThread->detach();  // Avoid blocking forever
-        } else {
-            _engineThread->join();
-        }
+        // The UCI loop owns redirected process-wide standard streams. Never
+        // detach it; the stream buffers must outlive the engine thread.
+        _engineThread->join();
     }
     _engineThread.reset();
 }
@@ -148,7 +134,6 @@ using namespace SFEmbedded;
 
     // Ensure input is closed and signal completion for the stopper.
     _commandQueue.close();
-    _donePromise.set_value();
 }
 
 @end

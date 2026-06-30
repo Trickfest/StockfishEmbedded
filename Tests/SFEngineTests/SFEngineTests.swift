@@ -201,6 +201,69 @@ final class SFEngineTests: XCTestCase {
         XCTAssertLessThan(elapsed, 3.0, "Stop took too long: \(elapsed)s")
     }
 
+    func testContractRepeatedStopsDuringSearchReturnBestmoves() async {
+        let localHarness = SFEngineHarness()
+
+        do {
+            try await localHarness.startAndBootstrap(timeout: 10.0)
+        } catch {
+            XCTFail("Failed to bootstrap local harness: \(error)")
+            return
+        }
+        defer { localHarness.stop() }
+
+        for attempt in 1...5 {
+            localHarness.send("position startpos")
+            localHarness.send("go movetime 500")
+            try? await Task.sleep(nanoseconds: 50_000_000)
+
+            let start = Date()
+            localHarness.send("stop")
+            guard let bestmoveLine = await localHarness.waitForLine(
+                timeout: 3.0,
+                matching: { $0.hasPrefix("bestmove ") }
+            ) else {
+                XCTFail("Expected bestmove after stop on attempt \(attempt)")
+                return
+            }
+
+            let elapsed = Date().timeIntervalSince(start)
+            guard let bestmove = SFEngineHarness.parseBestmove(bestmoveLine) else {
+                XCTFail("Could not parse bestmove line on attempt \(attempt): \(bestmoveLine)")
+                return
+            }
+
+            XCTAssertLessThan(elapsed, 3.0, "Stop attempt \(attempt) took too long: \(elapsed)s")
+            XCTAssertTrue(
+                Self.isValidBestmoveToken(bestmove),
+                "Unexpected bestmove token on attempt \(attempt): \(bestmove)"
+            )
+        }
+    }
+
+    func testContractRepeatedActiveSearchStopsAllowFreshEngineStarts() async {
+        for attempt in 1...5 {
+            let localHarness = SFEngineHarness()
+
+            do {
+                try await localHarness.startAndBootstrap(timeout: 10.0)
+            } catch {
+                XCTFail("Failed to bootstrap local harness on attempt \(attempt): \(error)")
+                return
+            }
+
+            localHarness.send("position startpos")
+            localHarness.send("go depth 40")
+            try? await Task.sleep(nanoseconds: 50_000_000)
+
+            let start = Date()
+            localHarness.stop()
+            let elapsed = Date().timeIntervalSince(start)
+
+            XCTAssertLessThan(elapsed, 10.0, "Fresh-start stop attempt \(attempt) took too long: \(elapsed)s")
+        }
+    }
+
     // Step 2: perft correctness tests.
 
     func testPerftRegressionSuiteCoversCanonicalPositions() async {

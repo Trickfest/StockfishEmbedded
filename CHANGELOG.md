@@ -6,7 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-No unreleased changes.
+### Fixed
+
+- Detach `std::cin` from `std::cout` while Stockfish runs against
+  wrapper-provided streams, avoiding flushes against redirected output during
+  engine shutdown and restart.
+- Join the engine thread during shutdown instead of detaching it after a timeout,
+  so redirected stream buffers outlive the running UCI loop.
+
+### Tests
+
+- Added repeated stop/search lifecycle coverage for active searches and fresh
+  engine starts.
 
 ## [1.6.1] - 2026-06-22
 

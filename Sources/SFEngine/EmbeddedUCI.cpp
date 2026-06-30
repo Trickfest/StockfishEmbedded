@@ -33,17 +33,20 @@ namespace {
 class StreamRedirector {
 public:
     StreamRedirector(std::istream& in, std::ostream& out) {
+        oldInTie_  = std::cin.tie(nullptr);
         oldInBuf_  = std::cin.rdbuf(in.rdbuf());
         oldOutBuf_ = std::cout.rdbuf(out.rdbuf());
     }
     ~StreamRedirector() {
         std::cin.rdbuf(oldInBuf_);
         std::cout.rdbuf(oldOutBuf_);
+        std::cin.tie(oldInTie_);
     }
     
 private:
     std::streambuf* oldInBuf_  = nullptr;
     std::streambuf* oldOutBuf_ = nullptr;
+    std::ostream*   oldInTie_  = nullptr;
 };
 
 }  // namespace

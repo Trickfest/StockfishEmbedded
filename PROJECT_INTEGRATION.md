@@ -114,6 +114,22 @@ How to apply it:
 If you use **Option 2** (XCFramework), remove the `HEADER_SEARCH_PATHS` line because the
 framework exposes its own headers. Keep the bridging header line if you still use one.
 
+## Runtime behavior for app integrators
+
+`SFEngine` embeds Stockfish in your app process. Calling `start()` creates a
+wrapper-owned C++ thread that runs the Stockfish UCI loop, and app code sends
+commands through the thread-safe `sendCommand(_:)` queue. Stockfish performs
+best-move search on its own search worker thread or threads, not on the app's
+main thread. The vendored engine's default UCI `Threads` value is `1`; apps that
+want more search workers must explicitly send a `setoption name Threads value N`
+command before searching.
+
+Prefer UCI search limits for normal move timing, especially
+`go movetime <milliseconds>` when the UI needs predictable pacing. App-side
+timeouts are safety cutoffs around waiting for a result. If a timeout fires, the
+app can send `stop`, but that is a cooperative request to Stockfish rather than
+a forced thread interruption.
+
 ## Verification checklist (sanity check)
 - You downloaded NNUE files before building StockfishEmbedded.
 - Option 1: your app target depends on `SFEngine-iOS` and links `libSFEngine-iOS.a`.

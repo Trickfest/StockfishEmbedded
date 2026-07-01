@@ -136,8 +136,28 @@ Highlights:
 
 ## Adapter details
 - `SFEngine` spins the engine on a dedicated worker thread, swapping `std::cin/std::cout` to custom stream buffers that talk to a thread-safe queue.
-- `stop` enqueues `stop` + `quit`, closes the queue (to guarantee EOF), and waits briefly for a clean shutdown.
+- `stop` enqueues `stop` + `quit`, closes the queue (to guarantee EOF), and joins the engine thread for a clean shutdown.
 - Stockfish sources are unmodified; the tiny `EmbeddedUCI` shim calls the upstream UCI loop after redirecting streams and performing the normal initialization from `main.cpp`.
+
+## Threading and search control
+`SFEngine` is an in-process wrapper, not a separate engine process. Starting an
+engine instance creates one wrapper-owned C++ thread that runs Stockfish's UCI
+loop. Swift, SwiftUI, and app main-thread code should send commands through
+`sendCommand(_:)`; best-move search does not run on the app's main thread.
+
+Stockfish also has its own internal search thread pool. The UCI `Threads` option
+defaults to `1` in the vendored engine, so a normal search uses one Stockfish
+search worker unless your app explicitly sends a command such as
+`setoption name Threads value 4`. A single busy search worker can still consume
+roughly one CPU core while it is thinking.
+
+Search duration should normally be controlled with Stockfish UCI limits:
+`go movetime <milliseconds>` for a wall-clock move budget, `go depth <plies>`
+for a fixed-depth search, or `go nodes <count>` for a node budget. These limits
+are different from an app-side timeout in a test runner or UI. If your app-side
+timeout fires, the usual recovery is to send `stop` and use the best `bestmove`
+Stockfish returns, but `stop` is cooperative. It asks Stockfish to stop; it does
+not forcibly interrupt or kill a native thread.
 
 ## Known limitations
 - Engines are intended for single start/stop per instance; create a new `SFEngine` if you need to restart.

@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Documented `SFEngine` threading, Stockfish search workers, and the difference
+  between UCI search limits, app-side timeouts, and cooperative `stop` requests.
+
 ## [1.6.2] - 2026-06-29
 
 ### Fixed

@@ -53,7 +53,7 @@ If you prefer to run the commands manually, use the filename reported in
 `ThirdParty/Stockfish/src/evaluate.h`:
 ```
 mkdir -p Resources/NNUE
-curl -L --fail https://tests.stockfishchess.org/api/nn/nn-71d6d32cb962.nnue -o Resources/NNUE/nn-71d6d32cb962.nnue
+curl -L --fail https://tests.stockfishchess.org/api/nn/nn-af1339a6dea3.nnue -o Resources/NNUE/nn-af1339a6dea3.nnue
 ```
 
 If you prefer, you can run `ThirdParty/Stockfish/scripts/net.sh` (from within `ThirdParty/Stockfish/src`), then copy the downloaded `.nnue` file into `Resources/NNUE`.
@@ -170,7 +170,7 @@ Key points:
 - Updates are explicit and reviewable; there is no submodule.
 - Updating Stockfish is a single, squashed subtree pull from upstream.
 - The upstream commit hash is recorded in the subtree metadata lines in the update commit message.
-- Current vendored upstream commit: `74a0a73715322608332038f7c0151ddf0609a59a`.
+- Current vendored upstream commit: `6088838797d6333711c17fe2c0962fa0858517ec`.
 - If Stockfish changes the default NNUE filenames, revisit the NNUE section above and download the matching nets.
   You can confirm the required filename in `ThirdParty/Stockfish/src/evaluate.h` (`EvalFileDefaultName`).
 - Warning: Updating Stockfish (to `master` or a release tag) can break the parent repo's shim or build setup due to upstream API or initialization changes. If a build fails after an update, you may need to adjust the wrapper code in `Sources/SFEngine` to match the new Stockfish expectations.

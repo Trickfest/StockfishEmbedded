@@ -6,10 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-07-02
+
 ### Changed
 
 - Documented `SFEngine` threading, Stockfish search workers, and the difference
   between UCI search limits, app-side timeouts, and cooperative `stop` requests.
+- Updated vendored Stockfish subtree to upstream commit
+  `6088838797d6333711c17fe2c0962fa0858517ec` (official `master` as of
+  2026-07-02).
+- Updated NNUE instructions to use `nn-af1339a6dea3.nnue`.
+- Audited the embedded UCI shim against upstream `main.cpp`; no shim code
+  changes were required for this Stockfish snapshot.
 
 ## [1.6.2] - 2026-06-29
 

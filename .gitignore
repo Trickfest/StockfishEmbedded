@@ -36,8 +36,12 @@ playground.xcworkspace
 build/
 Resources/NNUE/*.nnue
 
-# Xcode project workspace (auto-generated wrapper inside .xcodeproj)
-*.xcodeproj/project.xcworkspace/
+# Xcode project workspace (track only the shared Swift package lockfile)
+*.xcodeproj/project.xcworkspace/*
+!*.xcodeproj/project.xcworkspace/xcshareddata/
+*.xcodeproj/project.xcworkspace/xcshareddata/*
+!*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/*
 !*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
 
 # CocoaPods

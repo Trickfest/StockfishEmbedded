@@ -10,43 +10,58 @@
 
 import Foundation
 
-actor SFLineMailbox {
+final class SFLineMailbox: @unchecked Sendable {
+    private let lock = NSLock()
     private var buffered: [String] = []
     private var waiters: [(UUID, CheckedContinuation<String?, Never>)] = []
 
     func append(_ line: String) {
+        lock.lock()
         if !waiters.isEmpty {
             let (_, continuation) = waiters.removeFirst()
+            lock.unlock()
             continuation.resume(returning: line)
             return
         }
 
         buffered.append(line)
+        lock.unlock()
     }
 
     func nextLine() async -> String? {
-        if !buffered.isEmpty {
-            return buffered.removeFirst()
-        }
-
         let token = UUID()
         return await withTaskCancellationHandler {
             await withCheckedContinuation { continuation in
+                lock.lock()
+                if !buffered.isEmpty {
+                    let line = buffered.removeFirst()
+                    lock.unlock()
+                    continuation.resume(returning: line)
+                    return
+                }
+                if Task.isCancelled {
+                    lock.unlock()
+                    continuation.resume(returning: nil)
+                    return
+                }
+
                 waiters.append((token, continuation))
+                lock.unlock()
             }
         } onCancel: {
-            Task {
-                await self.cancelWaiter(token: token)
-            }
+            self.cancelWaiter(token: token)
         }
     }
 
     private func cancelWaiter(token: UUID) {
+        lock.lock()
         guard let index = waiters.firstIndex(where: { $0.0 == token }) else {
+            lock.unlock()
             return
         }
 
         let (_, continuation) = waiters.remove(at: index)
+        lock.unlock()
         continuation.resume(returning: nil)
     }
 }
@@ -82,13 +97,7 @@ final class SFEngineHarness: @unchecked Sendable {
 
     init() {
         engine = SFEngine { [weak self] line in
-            guard let self else {
-                return
-            }
-
-            Task {
-                await self.lineMailbox.append(line)
-            }
+            self?.lineMailbox.append(line)
         }
     }
 
@@ -258,9 +267,17 @@ final class SFEngineHarness: @unchecked Sendable {
                 return nil
             }
 
-            let result = await group.next() ?? nil
+            let firstResult = await group.next() ?? nil
             group.cancelAll()
-            return result
+            if let firstResult {
+                return firstResult
+            }
+            while let trailingResult = await group.next() {
+                if let trailingResult {
+                    return trailingResult
+                }
+            }
+            return nil
         }
     }
 }

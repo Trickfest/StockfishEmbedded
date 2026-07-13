@@ -73,6 +73,7 @@
 		B10000000000000000000101 /* SFEngineHarness.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000301 /* SFEngineHarness.swift */; };
 		B10000000000000000000102 /* SFEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000302 /* SFEngineTests.swift */; };
 		B10000000000000000000103 /* libSFEngine-macOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000011 /* libSFEngine-macOS.a */; };
+		B10000000000000000000104 /* SFEngineSoakRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C19554DECD4A4E45AFC973E9 /* SFEngineSoakRunner.swift */; };
 		BB3BC3CC2F4750D7008611D7 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BB3BC3CB2F4750D7008611D7 /* XCTest.framework */; };
 		C0274C8526244970A8552B27 /* ArgumentParser in Frameworks */ = {isa = PBXBuildFile; productRef = 7425DBD7201F406F91FA976F /* ArgumentParser */; };
 		C56548E1016C4EB2A901C923 /* libSFEngine-macOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000011 /* libSFEngine-macOS.a */; };
@@ -692,6 +693,7 @@
 			files = (
 				B10000000000000000000101 /* SFEngineHarness.swift in Sources */,
 				B10000000000000000000102 /* SFEngineTests.swift in Sources */,
+				B10000000000000000000104 /* SFEngineSoakRunner.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -757,7 +759,7 @@
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Sources/CLISoakSwift/SFEngineCLISoakTestSwift-Bridging-Header.h";
-				SWIFT_VERSION = 5.9;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
 		};
@@ -767,7 +769,6 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = LVYMXM9579;
 				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/Sources/SFEngine";
 				INFOPLIST_FILE = IOSSwiftUI/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
@@ -781,7 +782,7 @@
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 				SWIFT_OBJC_BRIDGING_HEADER = "IOSSwiftUI/SFEngineTestSwiftUI-Bridging-Header.h";
-				SWIFT_VERSION = 5.9;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -792,7 +793,6 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = LVYMXM9579;
 				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/Sources/SFEngine";
 				INFOPLIST_FILE = IOSSwiftUI/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
@@ -806,7 +806,7 @@
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 				SWIFT_OBJC_BRIDGING_HEADER = "IOSSwiftUI/SFEngineTestSwiftUI-Bridging-Header.h";
-				SWIFT_VERSION = 5.9;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -817,12 +817,15 @@
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
+				ENABLE_TESTABILITY = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
 		};
@@ -849,7 +852,6 @@
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGNING_ALLOWED = NO;
-				ENABLE_BITCODE = NO;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
 				HEADER_SEARCH_PATHS = (
@@ -884,9 +886,13 @@
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGNING_ALLOWED = NO;
-				ENABLE_BITCODE = NO;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"NDEBUG=1",
+				);
 				HEADER_SEARCH_PATHS = (
 					"$(PROJECT_DIR)/Sources/SFEngine",
 					"$(PROJECT_DIR)/ThirdParty/Stockfish/src/**",
@@ -940,7 +946,6 @@
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				supportedPlatforms = macosx;
 			};
 			name = Debug;
 		};
@@ -954,6 +959,11 @@
 				CODE_SIGNING_ALLOWED = NO;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"NDEBUG=1",
+				);
 				HEADER_SEARCH_PATHS = (
 					"$(PROJECT_DIR)/Sources/SFEngine",
 					"$(PROJECT_DIR)/ThirdParty/Stockfish/src/**",
@@ -973,7 +983,6 @@
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				supportedPlatforms = macosx;
 			};
 			name = Release;
 		};
@@ -1066,7 +1075,7 @@
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Sources/CLISwift/SFEngineCLITestSwift-Bridging-Header.h";
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
 		};
@@ -1092,7 +1101,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "Tests/SFEngineTests/SFEngineTests-Bridging-Header.h";
-				SWIFT_VERSION = 5.9;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
 		};
@@ -1118,7 +1127,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "Tests/SFEngineTests/SFEngineTests-Bridging-Header.h";
-				SWIFT_VERSION = 5.9;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Release;
 		};
@@ -1141,7 +1150,7 @@
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Sources/CLISwift/SFEngineCLITestSwift-Bridging-Header.h";
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Release;
 		};
@@ -1164,7 +1173,7 @@
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Sources/CLISoakSwift/SFEngineCLISoakTestSwift-Bridging-Header.h";
-				SWIFT_VERSION = 5.9;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Release;
 		};

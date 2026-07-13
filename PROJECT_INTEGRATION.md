@@ -1,14 +1,18 @@
 # Project Integration (No SwiftPM)
 
-This document describes two ways to use StockfishEmbedded from another Xcode project
-without Swift Package Manager.
+This document describes how to use StockfishEmbedded from another Xcode project
+without Swift Package Manager. Consumers build it from source by adding the
+StockfishEmbedded Xcode project to their app project or workspace.
 
 Important:
 - NNUE files are required at build time because they are embedded into the library.
   See `Resources/NNUE/README.md` for download steps.
-- GPL-3.0 obligations apply when you distribute apps or binaries that link this library.
+- The current static libraries require iOS/iPadOS 26 or macOS 26.
+- Consumer targets must link the C++ standard library with
+  `OTHER_LDFLAGS = $(inherited) -lc++`.
+- GPL-3.0 obligations apply when you distribute apps that link this library.
 
-## Option 1: Add as a Subproject (Source Integration)
+## Add as a Subproject (Source Integration)
 
 Best when you want Xcode to build StockfishEmbedded from source as part of your app build.
 
@@ -26,7 +30,8 @@ Best when you want Xcode to build StockfishEmbedded from source as part of your 
    $(PROJECT_DIR)/MyApp/MyApp-Bridging-Header.h
    $(PROJECT_DIR)/../StockfishEmbedded/Sources/SFEngine
    ```
-4) Build for device or simulator.
+4) Add `-lc++` to the app target's Other Linker Flags, then build for device or
+   simulator.
 
 ### For non-Xcode folks (details)
 - Xcode settings are per target. Make changes on your app target, not the project.
@@ -39,55 +44,8 @@ Best when you want Xcode to build StockfishEmbedded from source as part of your 
   projects are not in the same workspace/subproject tree.
 - Step 3 detail: the bridging header is how Swift sees Objective-C. If you already have one,
   add the import line to it; do not create a second bridging header.
-- If the linker complains about C++ symbols, add `-lc++` to `Other Linker Flags`.
-
-## Option 2: Build an XCFramework (Binary Integration)
-
-Best when you want to drop a single binary into multiple projects.
-
-### Quickstart
-1) Build device + simulator static libraries:
-   ```
-   xcodebuild -project StockfishEmbedded.xcodeproj \
-     -scheme SFEngine-iOS -configuration Release \
-     -destination 'generic/platform=iOS' \
-     -derivedDataPath build
-
-   xcodebuild -project StockfishEmbedded.xcodeproj \
-     -scheme SFEngine-iOS -configuration Release \
-     -destination 'generic/platform=iOS Simulator' \
-     -derivedDataPath build
-   ```
-
-2) Create the XCFramework:
-   ```
-   xcodebuild -create-xcframework \
-     -library build/Build/Products/Release-iphoneos/libSFEngine-iOS.a -headers Sources/SFEngine \
-     -library build/Build/Products/Release-iphonesimulator/libSFEngine-iOS.a -headers Sources/SFEngine \
-     -output build/SFEngine.xcframework
-   ```
-
-3) Integrate into your app:
-   - Drag `build/SFEngine.xcframework` into your project.
-   - In your app target, add it under "Frameworks, Libraries, and Embedded Content"
-     and set it to "Do Not Embed".
-
-4) Expose the Objective-C API to Swift:
-   - Bridging header with:
-     ```
-     #import <SFEngine/SFEngine.h>
-     ```
-
-### For non-Xcode folks (details)
-- iOS device and iOS simulator are different platforms; you must build both slices.
-- The XCFramework packaging step combines the slices and exposes headers in a stable location.
-- "Do Not Embed" is correct for static libraries; the app links it at build time.
-- With an XCFramework you normally do not need Header Search Paths; the framework provides headers.
-- If you already use a bridging header, just add the import line there.
-
-Note: To support both Apple Silicon and Intel simulators, you may need to build the
-simulator slice on both architectures or pass `ARCHS="arm64 x86_64"` when building
-the simulator library.
+- `-lc++` is required because the static archive contains unresolved C++
+  standard-library symbols.
 
 ## Optional: Use an .xcconfig (recommended for repeatability)
 
@@ -100,7 +58,6 @@ Example: `Configs/StockfishEmbedded.xcconfig`
 SWIFT_OBJC_BRIDGING_HEADER = $(PROJECT_DIR)/MyApp/MyApp-Bridging-Header.h
 OTHER_LDFLAGS = $(inherited) -lc++
 
-// Option 1 (subproject) only:
 HEADER_SEARCH_PATHS = $(inherited) "$(PROJECT_DIR)/../StockfishEmbedded/Sources/SFEngine"
 ```
 
@@ -110,9 +67,6 @@ Where it lives:
 How to apply it:
 - In Xcode: select the project -> Info -> Configurations -> set the base configuration
   for your app target to this `.xcconfig` (for Debug/Release as needed).
-
-If you use **Option 2** (XCFramework), remove the `HEADER_SEARCH_PATHS` line because the
-framework exposes its own headers. Keep the bridging header line if you still use one.
 
 ## Runtime behavior for app integrators
 
@@ -132,15 +86,17 @@ a forced thread interruption.
 
 ## Verification checklist (sanity check)
 - You downloaded NNUE files before building StockfishEmbedded.
-- Option 1: your app target depends on `SFEngine-iOS` and links `libSFEngine-iOS.a`.
-- Option 2: `SFEngine.xcframework` is added under "Frameworks, Libraries, and Embedded Content".
-- The bridging header imports `SFEngine.h` (Option 1) or `<SFEngine/SFEngine.h>` (Option 2).
+- Your app target depends on `SFEngine-iOS` and links `libSFEngine-iOS.a`.
+- The bridging header imports `SFEngine.h`.
+- The app target's Other Linker Flags include `$(inherited) -lc++`.
 - The app builds for both device and simulator.
 
 ## Common errors and fixes
 - `SFEngine-iOS` is greyed out: check you are on an iOS app target, and both projects
   are in the same workspace/subproject tree.
-- `'SFEngine.h' file not found`: fix the bridging header path or header search paths (Option 1).
-- `Undefined symbols for architecture ...`: you may be linking the wrong slice or missing `-lc++`.
-- `building for iOS Simulator, but linking in object file built for iOS`: rebuild the
-  simulator library (Option 2) or ensure you are linking `SFEngine-iOS` (Option 1).
+- `'SFEngine.h' file not found`: fix the bridging header path or header search paths.
+- `Undefined symbols for architecture ...`: confirm `-lc++` is present and that
+  you are linking the slice for the active platform/architecture.
+- `building for iOS Simulator, but linking in object file built for iOS`: ensure
+  the app target depends on `SFEngine-iOS` and lets Xcode build it for the active
+  destination.

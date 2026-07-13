@@ -13,6 +13,7 @@
 #pragma once
 
 #include <functional>
+#include <mutex>
 #include <ostream>
 #include <streambuf>
 #include <string>
@@ -30,6 +31,8 @@ class LineBufferStreambuf: public std::streambuf {
 
    protected:
     int_type overflow(int_type ch) override {
+        std::lock_guard<std::mutex> lock(mutex_);
+
         // Ignore EOF and carriage returns; flush on newline.
         if (traits_type::eq_int_type(ch, traits_type::eof()))
             return traits_type::not_eof(ch);
@@ -47,6 +50,8 @@ class LineBufferStreambuf: public std::streambuf {
     }
 
     int sync() override {
+        std::lock_guard<std::mutex> lock(mutex_);
+
         // Flush any buffered partial line.
         flush_line();
         return 0;
@@ -54,14 +59,18 @@ class LineBufferStreambuf: public std::streambuf {
 
    private:
     void flush_line() {
-        if (!callback_ || buffer_.empty())
+        if (buffer_.empty())
             return;
+
         // The callback receives the line without the trailing newline.
-        callback_(buffer_);
+        std::string line = std::move(buffer_);
         buffer_.clear();
+        if (callback_)
+            callback_(line);
     }
 
     LineCallback callback_;
+    std::mutex   mutex_;
     std::string  buffer_;
 };
 

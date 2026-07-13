@@ -6,6 +6,73 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Added lifecycle, concurrent-instance, callback-stop/drain, unsafe-command,
+  timeout-attribution, and soak runner regression coverage.
+- Added `Scripts/validate.sh` as a single complete local validation entry point.
+- Began tracking the Swift package lockfile for reproducible ArgumentParser
+  resolution.
+
+### Changed
+
+- Deliver engine output in order on a wrapper-owned serial callback queue and
+  make callback-initiated shutdown safe; Swift now imports the handler as
+  `@Sendable` so its cross-thread capture contract is compiler-visible.
+- Make `stop` a terminal instance transition even when called before `start`,
+  eliminating an ambiguous concurrent start/stop window.
+- Enforce one active `SFEngine` per process because the upstream UCI loop uses
+  process-wide C++ streams; rejected concurrent starts now report an
+  `info string StockfishEmbedded error` line and may be retried later.
+- Move the owned Swift smoke, soak, and test targets to Swift 6.
+- Make Swift Debug builds explicitly unoptimized and testable instead of
+  inheriting release-style compiler defaults from the sparse project settings.
+- Align Release engine libraries with Stockfish's normal optimized build policy
+  by using `-O3` and `NDEBUG`; Debug builds continue to retain assertions.
+- Make the soak runner validate configuration/position input, preserve callback
+  order, expose only the parsed best-move token, reject concurrent runs, and
+  observe stop requests promptly during handshakes and delays.
+- Verify the SHA-256 prefix encoded in NNUE filenames for cached and downloaded
+  networks.
+- Clarify the OS 26 deployment floor, required `-lc++` consumer setting,
+  process-global stream boundary, trusted-command boundary, and GPL
+  release checklist.
+- Document that GitHub-hosted validation is intentionally deferred while the
+  NNUE-backed local validation gate remains the expected release evidence.
+
+### Fixed
+
+- Break the engine thread's unintended retain of its `SFEngine` owner so
+  releasing a running wrapper reaches deterministic shutdown instead of
+  leaking or potentially attempting a fatal self-join.
+- Serialize lifecycle state so concurrent `start`, `sendCommand`, and `stop`
+  calls cannot race the thread handle or a closed command queue.
+- Reject embedded NULs, multiple UCI lines, oversized commands, and Stockfish's
+  incompatible process-static `Debug Log File` option at the owned boundary.
+- Clear callback-less output buffers and protect line assembly from concurrent
+  writers.
+- Normalize C++ stream formatting/locale for UCI and restore the host's prior
+  formatting, locale, tie, buffers, and safely restorable stream state.
+- Stop the soak runner after an unrecovered timeout instead of allowing a late
+  best move to be attributed to the next position; align emitted error events
+  with summary error counts.
+- Preserve a line consumed exactly at a timeout boundary instead of discarding
+  a terminal `bestmove`, and suppress queued callbacks after handler-initiated
+  shutdown returns.
+- Return failure from the Objective-C and Swift CLI smoke tests unless `uciok`,
+  `readyok`, and a legal best move are observed.
+- Prevent the SwiftUI smoke app from starting a new engine until asynchronous
+  teardown completes, and ignore output from stale run tokens.
+
+### Removed
+
+- Removed the unsafe soak `--continue-on-timeout` option and the corresponding
+  `Configuration.stopOnTimeoutFailure` property. Recovered timeouts now consume
+  that search's terminal `bestmove`; unrecovered timeouts always stop the run.
+- Removed the XCFramework integration path from the current documentation;
+  StockfishEmbedded is supported as source through its Xcode project rather
+  than as a published binary package.
+
 ## [1.7.0] - 2026-07-02
 
 ### Changed

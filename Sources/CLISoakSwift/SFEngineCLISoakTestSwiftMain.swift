@@ -35,7 +35,7 @@ import Foundation
 @main
 @available(macOS 26.0, *)
 struct SFEngineCLISoakTestSwift: AsyncParsableCommand {
-    static var configuration = CommandConfiguration(
+    static let configuration = CommandConfiguration(
         commandName: "SFEngineCLISoakTestSwift",
         abstract: "Long-running soak test for SFEngine.",
         discussion: "Loads FENs from one or more files and repeatedly searches them using the embedded Stockfish engine."
@@ -47,19 +47,19 @@ struct SFEngineCLISoakTestSwift: AsyncParsableCommand {
     // input is that at least one position is loaded (from the default files or
     // explicit paths).
 
-    /// One or more position files (one FEN per line). Defaults to
+    /// One or more position files (one FEN/optional moves sequence per line). Defaults to
     /// `Resources/Soak/positions.txt` when empty.
     @Option(
         name: .long,
         parsing: .upToNextOption,
-        help: "One or more position files (one FEN per line). Defaults to Resources/Soak/positions.txt."
+        help: "One or more position files (one FEN with optional moves per line). Defaults to Resources/Soak/positions.txt."
     )
     var positions: [String] = []
 
     /// Chess960 positions file. Only used when `--chess960` is enabled.
     @Option(
         name: .customLong("chess960-positions"),
-        help: "Chess960 position file (one FEN per line). Requires --chess960. Defaults to Resources/Soak/positions_chess960.txt."
+        help: "Chess960 position file (one FEN with optional moves per line). Requires --chess960. Defaults to Resources/Soak/positions_chess960.txt."
     )
     var chess960Positions: String?
 
@@ -110,10 +110,6 @@ struct SFEngineCLISoakTestSwift: AsyncParsableCommand {
     @Flag(name: .customLong("log-output"), help: "Print all engine output lines.")
     var logOutput: Bool = false
 
-    /// If set, the run continues after a timeout rather than stopping.
-    @Flag(name: .customLong("continue-on-timeout"), help: "Continue after a timeout instead of stopping.")
-    var continueOnTimeout: Bool = false
-
     // MARK: - Validation
 
     mutating func validate() throws {
@@ -123,6 +119,30 @@ struct SFEngineCLISoakTestSwift: AsyncParsableCommand {
         }
         if chess960Positions != nil && !chess960 {
             throw ValidationError("--chess960-positions requires --chess960.")
+        }
+        if let depth, depth <= 0 {
+            throw ValidationError("--depth must be greater than zero.")
+        }
+        if let nodes, nodes <= 0 {
+            throw ValidationError("--nodes must be greater than zero.")
+        }
+        if let movetime, movetime <= 0 {
+            throw ValidationError("--movetime must be greater than zero.")
+        }
+        if let iterations, iterations <= 0 {
+            throw ValidationError("--iterations must be greater than zero.")
+        }
+        if timeout <= 0 {
+            throw ValidationError("--timeout must be greater than zero.")
+        }
+        if stopTimeout <= 0 {
+            throw ValidationError("--stop-timeout must be greater than zero.")
+        }
+        if handshakeTimeout <= 0 {
+            throw ValidationError("--handshake-timeout must be greater than zero.")
+        }
+        if let delayMs, delayMs < 0 {
+            throw ValidationError("--delay-ms cannot be negative.")
         }
     }
 
@@ -174,7 +194,6 @@ struct SFEngineCLISoakTestSwift: AsyncParsableCommand {
             handshakeTimeout: .seconds(handshakeTimeout),
             delayBetweenIterations: delayMs.map { .milliseconds($0) },
             readyCheckEveryIteration: readyEach,
-            stopOnTimeoutFailure: !continueOnTimeout,
             engineOptions: engineOptions
         )
 
@@ -253,7 +272,7 @@ private func loadPositions(from path: String) throws -> [SFEngineSoakRunner.Posi
     let contents = try String(contentsOfFile: path, encoding: .utf8)
     var specs: [SFEngineSoakRunner.PositionSpec] = []
 
-    for rawLine in contents.split(whereSeparator: \.isNewline) {
+    for (index, rawLine) in contents.components(separatedBy: .newlines).enumerated() {
         let line = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)
         if line.isEmpty || line.hasPrefix("#") {
             continue
@@ -261,6 +280,9 @@ private func loadPositions(from path: String) throws -> [SFEngineSoakRunner.Posi
         if line == "startpos" {
             specs.append(.startpos)
         } else {
+            guard isValidFENWithOptionalMoves(line) else {
+                throw ValidationError("Invalid FEN/position at \(path):\(index + 1)")
+            }
             specs.append(.fen(line))
         }
     }

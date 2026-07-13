@@ -67,29 +67,39 @@ import Foundation
 ///     }
 /// }
 /// ```
-public final class SFEngineSoakRunner {
+public final class SFEngineSoakRunner: @unchecked Sendable {
     private final class State: @unchecked Sendable {
+        struct StopTargets {
+            let engine: SFEngine?
+            let lineQueue: LineQueue?
+        }
+
         private let queue = DispatchQueue(label: "SFEngineSoakRunner.State")
         private var engine: SFEngine?
+        private var lineQueue: LineQueue?
         private var stopRequested = false
 
-        func start(engine: SFEngine) {
+        func start(engine: SFEngine, lineQueue: LineQueue) -> Bool {
             queue.sync {
+                guard self.engine == nil else { return false }
                 self.engine = engine
+                self.lineQueue = lineQueue
                 stopRequested = false
+                return true
             }
         }
 
-        func requestStop() -> SFEngine? {
+        func requestStop() -> StopTargets {
             queue.sync {
                 stopRequested = true
-                return engine
+                return StopTargets(engine: engine, lineQueue: lineQueue)
             }
         }
 
         func clearEngine() {
             queue.sync {
                 engine = nil
+                lineQueue = nil
             }
         }
 
@@ -102,7 +112,7 @@ public final class SFEngineSoakRunner {
     ///
     /// Use `.startpos` for the standard chess starting position, or `.fen`
     /// for explicit FEN strings.
-    public enum PositionSpec: Equatable {
+    public enum PositionSpec: Equatable, Sendable {
         case startpos
         case fen(String)
 
@@ -119,7 +129,7 @@ public final class SFEngineSoakRunner {
     /// A single UCI search limit for each iteration.
     ///
     /// Only one limit should be used per run (depth, nodes, or movetime).
-    public enum SearchLimit: Equatable {
+    public enum SearchLimit: Equatable, Sendable {
         case depth(Int)
         case nodes(Int)
         case moveTimeMillis(Int)
@@ -149,9 +159,8 @@ public final class SFEngineSoakRunner {
     /// - `handshakeTimeout`: 10s (wait for `uciok` / `readyok`)
     /// - `delayBetweenIterations`: `nil` (no delay)
     /// - `readyCheckEveryIteration`: `false` (skip per-iteration `isready`)
-    /// - `stopOnTimeoutFailure`: `true` (treat timeout-after-stop as error)
     /// - `engineOptions`: `[]` (UCI commands like `setoption name ...`)
-    public struct Configuration: Equatable {
+    public struct Configuration: Equatable, Sendable {
         public var positions: [PositionSpec]
         public var searchLimit: SearchLimit
         public var maxIterations: Int?
@@ -160,7 +169,6 @@ public final class SFEngineSoakRunner {
         public var handshakeTimeout: Duration
         public var delayBetweenIterations: Duration?
         public var readyCheckEveryIteration: Bool
-        public var stopOnTimeoutFailure: Bool
         public var engineOptions: [String]
 
         /// Creates a configuration. `positions` must be non-empty.
@@ -176,7 +184,6 @@ public final class SFEngineSoakRunner {
             handshakeTimeout: Duration = .seconds(10),
             delayBetweenIterations: Duration? = nil,
             readyCheckEveryIteration: Bool = false,
-            stopOnTimeoutFailure: Bool = true,
             engineOptions: [String] = []
         ) {
             self.positions = positions
@@ -187,13 +194,41 @@ public final class SFEngineSoakRunner {
             self.handshakeTimeout = handshakeTimeout
             self.delayBetweenIterations = delayBetweenIterations
             self.readyCheckEveryIteration = readyCheckEveryIteration
-            self.stopOnTimeoutFailure = stopOnTimeoutFailure
             self.engineOptions = engineOptions
+        }
+
+        var validationError: String? {
+            guard !positions.isEmpty else { return "No positions provided" }
+            guard positions.allSatisfy(\.isValid) else {
+                return "Every position must be startpos or a plausible four/six-field FEN with optional UCI moves"
+            }
+
+            switch searchLimit {
+            case .depth(let value) where value <= 0:
+                return "Search depth must be greater than zero"
+            case .nodes(let value) where value <= 0:
+                return "Node limit must be greater than zero"
+            case .moveTimeMillis(let value) where value <= 0:
+                return "Move time must be greater than zero"
+            default:
+                break
+            }
+
+            if let maxIterations, maxIterations <= 0 {
+                return "Maximum iterations must be greater than zero"
+            }
+            guard perMoveTimeout > .zero else { return "Per-move timeout must be greater than zero" }
+            guard stopTimeout > .zero else { return "Stop timeout must be greater than zero" }
+            guard handshakeTimeout > .zero else { return "Handshake timeout must be greater than zero" }
+            if let delayBetweenIterations, delayBetweenIterations < .zero {
+                return "Delay between iterations cannot be negative"
+            }
+            return nil
         }
     }
 
     /// Summary counters for the run. `elapsed` is set when the run finishes.
-    public struct Summary: Equatable {
+    public struct Summary: Equatable, Sendable {
         public var iterationsAttempted: Int
         public var iterationsCompleted: Int
         public var timeouts: Int
@@ -205,7 +240,7 @@ public final class SFEngineSoakRunner {
     ///
     /// `engineOutput` forwards raw UCI output lines.
     /// `iterationCompleted` / `timeout` include per-iteration elapsed time.
-    public enum Event: Equatable {
+    public enum Event: Equatable, Sendable {
         case started(Configuration)
         case engineOutput(String)
         case iterationStarted(index: Int, position: PositionSpec)
@@ -227,10 +262,9 @@ public final class SFEngineSoakRunner {
     /// Requests a stop. Safe to call from any thread.
     /// Sends `stop` then shuts the engine down.
     public func stop() {
-        let engineToStop = state.requestStop()
-
-        engineToStop?.sendCommand("stop")
-        engineToStop?.stop()
+        let targets = state.requestStop()
+        targets.lineQueue?.finish()
+        targets.engine?.stop()
     }
 
     /// Runs the soak loop and returns a summary when it finishes.
@@ -241,34 +275,41 @@ public final class SFEngineSoakRunner {
         let clock = ContinuousClock()
         let start = clock.now
 
-        // Positions are required; stop immediately with an error if missing.
-        guard !configuration.positions.isEmpty else {
+        // Reject invalid configuration before creating native engine state.
+        if let validationError = configuration.validationError {
             var summary = Summary(iterationsAttempted: 0,
                                   iterationsCompleted: 0,
                                   timeouts: 0,
                                   errors: 1,
                                   elapsed: .zero)
             summary.elapsed = clock.now - start
-            eventHandler(.error("No positions provided"))
+            eventHandler(.error(validationError))
             eventHandler(.finished(summary))
             return summary
         }
-
-        eventHandler(.started(configuration))
 
         // Marshal the engine's line callback into an async stream.
         let lineQueue = LineQueue()
 
         // Create the engine and enqueue each output line.
         let engine = SFEngine(lineHandler: { line in
-            Task {
-                await lineQueue.push(line)
-            }
+            lineQueue.push(line)
         })
 
-        state.start(engine: engine)
+        guard state.start(engine: engine, lineQueue: lineQueue) else {
+            let summary = Summary(iterationsAttempted: 0,
+                                  iterationsCompleted: 0,
+                                  timeouts: 0,
+                                  errors: 1,
+                                  elapsed: clock.now - start)
+            eventHandler(.error("This soak runner is already running"))
+            eventHandler(.finished(summary))
+            lineQueue.finish()
+            return summary
+        }
 
         engine.start()
+        eventHandler(.started(configuration))
 
         var summary = Summary(iterationsAttempted: 0,
                               iterationsCompleted: 0,
@@ -279,9 +320,7 @@ public final class SFEngineSoakRunner {
         // Always shut the engine down and emit a final summary.
         defer {
             engine.stop()
-            Task {
-                await lineQueue.finish()
-            }
+            lineQueue.finish()
             state.clearEngine()
             eventHandler(.finished(summary))
         }
@@ -292,9 +331,10 @@ public final class SFEngineSoakRunner {
             return summary
         }
 
+        let state = self.state
         let shouldStop: @Sendable () -> Bool = {
             if Task.isCancelled { return true }
-            return self.state.shouldStop()
+            return state.shouldStop()
         }
 
         // Pull one line at a time, forwarding raw output events.
@@ -324,6 +364,10 @@ public final class SFEngineSoakRunner {
         // Handshake: `uci` -> `uciok`, then apply options, then `isready`.
         engine.sendCommand("uci")
         guard await waitForPrefix("uciok", timeout: configuration.handshakeTimeout) != nil else {
+            if shouldStop() {
+                eventHandler(.stopped)
+                return finalizeSummary()
+            }
             summary.errors += 1
             eventHandler(.error("Timed out waiting for uciok"))
             return finalizeSummary()
@@ -335,6 +379,10 @@ public final class SFEngineSoakRunner {
 
         engine.sendCommand("isready")
         guard await waitForPrefix("readyok", timeout: configuration.handshakeTimeout) != nil else {
+            if shouldStop() {
+                eventHandler(.stopped)
+                return finalizeSummary()
+            }
             summary.errors += 1
             eventHandler(.error("Timed out waiting for readyok"))
             return finalizeSummary()
@@ -350,11 +398,13 @@ public final class SFEngineSoakRunner {
 
             let position = configuration.positions[index % configuration.positions.count]
             eventHandler(.iterationStarted(index: index, position: position))
+            if shouldStop() { break }
 
             if configuration.readyCheckEveryIteration {
                 engine.sendCommand("isready")
                 let ready = await waitForPrefix("readyok", timeout: configuration.handshakeTimeout)
                 if ready == nil {
+                    if shouldStop() { break }
                     summary.errors += 1
                     eventHandler(.error("Timed out waiting for readyok"))
                     break
@@ -366,13 +416,20 @@ public final class SFEngineSoakRunner {
 
             summary.iterationsAttempted += 1
             let iterStart = clock.now
-            let bestmove = await waitForPrefix("bestmove", timeout: configuration.perMoveTimeout)
+            let bestmoveLine = await waitForPrefix("bestmove", timeout: configuration.perMoveTimeout)
 
-            if let bestmove {
+            if let bestmoveLine {
+                guard let bestmove = parseBestmove(bestmoveLine) else {
+                    summary.errors += 1
+                    eventHandler(.error("Received malformed bestmove"))
+                    break
+                }
                 summary.iterationsCompleted += 1
                 eventHandler(.iterationCompleted(index: index,
-                                                 bestmove: bestmove,
-                                                 elapsed: clock.now - iterStart))
+                                                  bestmove: bestmove,
+                                                  elapsed: clock.now - iterStart))
+            } else if shouldStop() {
+                break
             } else {
                 summary.timeouts += 1
                 eventHandler(.timeout(index: index,
@@ -381,8 +438,17 @@ public final class SFEngineSoakRunner {
 
                 engine.sendCommand("stop")
                 let stopped = await waitForPrefix("bestmove", timeout: configuration.stopTimeout)
-                if stopped == nil && configuration.stopOnTimeoutFailure {
+                if stopped == nil {
+                    if shouldStop() {
+                        break
+                    }
+                    summary.errors += 1
                     eventHandler(.error("Timed out waiting for bestmove after stop"))
+                    break
+                }
+                if stopped.flatMap(parseBestmove) == nil {
+                    summary.errors += 1
+                    eventHandler(.error("Received malformed bestmove after stop"))
                     break
                 }
             }
@@ -390,7 +456,12 @@ public final class SFEngineSoakRunner {
             index += 1
 
             if let delay = configuration.delayBetweenIterations {
-                try? await Task.sleep(for: delay)
+                let deadline = clock.now.advanced(by: delay)
+                while !shouldStop() {
+                    let remaining = clock.now.duration(to: deadline)
+                    if remaining <= .zero { break }
+                    try? await Task.sleep(for: min(remaining, .milliseconds(50)))
+                }
             }
         }
 
@@ -402,8 +473,8 @@ public final class SFEngineSoakRunner {
     }
 }
 
-/// Actor-backed line buffer to bridge the engine callback to async consumers.
-private actor LineQueue {
+/// Lock-backed ordered line buffer to bridge the serial engine callback to async consumers.
+private final class LineQueue: @unchecked Sendable {
     private struct Waiter {
         let id: Int
         let continuation: CheckedContinuation<String?, Never>
@@ -413,60 +484,89 @@ private actor LineQueue {
     private var waiters: [Waiter] = []
     private var nextWaiterID = 0
     private var finished = false
+    private let lock = NSLock()
 
     func push(_ line: String) {
-        guard !finished else { return }
+        lock.lock()
+        guard !finished else {
+            lock.unlock()
+            return
+        }
         if !waiters.isEmpty {
             let waiter = waiters.removeFirst()
+            lock.unlock()
             waiter.continuation.resume(returning: line)
         } else {
             buffer.append(line)
+            lock.unlock()
         }
     }
 
     func next() async -> String? {
-        if !buffer.isEmpty {
-            return buffer.removeFirst()
-        }
-        if finished {
-            return nil
-        }
-
-        let id = nextWaiterID
-        nextWaiterID += 1
+        let id = allocateWaiterID()
 
         return await withTaskCancellationHandler {
             await withCheckedContinuation { continuation in
+                lock.lock()
+                if !buffer.isEmpty {
+                    let line = buffer.removeFirst()
+                    lock.unlock()
+                    continuation.resume(returning: line)
+                    return
+                }
+                if finished || Task.isCancelled {
+                    lock.unlock()
+                    continuation.resume(returning: nil)
+                    return
+                }
+
                 waiters.append(Waiter(id: id, continuation: continuation))
+                lock.unlock()
             }
         } onCancel: {
-            Task {
-                await self.cancelWaiter(id: id)
-            }
+            self.cancelWaiter(id: id)
         }
+    }
+
+    private func allocateWaiterID() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        let id = nextWaiterID
+        nextWaiterID += 1
+        return id
     }
 
     func finish() {
-        guard !finished else { return }
-        finished = true
-        for waiter in waiters {
-            waiter.continuation.resume(returning: nil)
+        lock.lock()
+        guard !finished else {
+            lock.unlock()
+            return
         }
+        finished = true
+        let continuations = waiters.map(\.continuation)
         waiters.removeAll()
         buffer.removeAll()
+        lock.unlock()
+
+        for continuation in continuations {
+            continuation.resume(returning: nil)
+        }
     }
 
     private func cancelWaiter(id: Int) {
+        lock.lock()
         guard let index = waiters.firstIndex(where: { $0.id == id }) else {
+            lock.unlock()
             return
         }
         let waiter = waiters.remove(at: index)
+        lock.unlock()
         waiter.continuation.resume(returning: nil)
     }
 }
 
 // Runs an async operation with a timeout; returns `nil` on timeout.
-private func withTimeout<T>(
+private func withTimeout<T: Sendable>(
     _ timeout: Duration,
     operation: @escaping @Sendable () async -> T?
 ) async -> T? {
@@ -478,8 +578,89 @@ private func withTimeout<T>(
             try? await Task.sleep(for: timeout)
             return nil
         }
-        let result = await group.next() ?? nil
+        let firstResult = await group.next() ?? nil
         group.cancelAll()
-        return result
+        if let firstResult {
+            return firstResult
+        }
+
+        // If the timeout task won just as the line waiter consumed a line,
+        // preserve that line instead of discarding the terminal engine output.
+        while let trailingResult = await group.next() {
+            if let trailingResult {
+                return trailingResult
+            }
+        }
+        return nil
+    }
+}
+
+private func parseBestmove(_ line: String) -> String? {
+    let parts = line.split(separator: " ")
+    guard parts.count >= 2, parts[0] == "bestmove" else { return nil }
+
+    let move = String(parts[1])
+    guard move.range(of: #"^(?:[a-h][1-8][a-h][1-8][nbrq]?|0000|\(none\))$"#,
+                     options: .regularExpression) != nil else {
+        return nil
+    }
+    return move
+}
+
+func isValidFENWithOptionalMoves(_ value: String) -> Bool {
+    let tokens = value.split(whereSeparator: \Character.isWhitespace).map(String.init)
+    guard !tokens.isEmpty else { return false }
+
+    let movesIndex = tokens.firstIndex(of: "moves") ?? tokens.endIndex
+    let fen = Array(tokens[..<movesIndex])
+    guard fen.count == 4 || fen.count == 6 else { return false }
+    let ranks = fen[0].split(separator: "/", omittingEmptySubsequences: false)
+    guard ranks.count == 8 else { return false }
+    for rank in ranks {
+        var squares = 0
+        for character in rank {
+            if let asciiValue = character.asciiValue, (49...56).contains(asciiValue) {
+                squares += Int(asciiValue - 48)
+            } else {
+                guard "prnbqkPRNBQK".contains(character) else { return false }
+                squares += 1
+            }
+        }
+        guard squares == 8 else { return false }
+    }
+    guard fen[1] == "w" || fen[1] == "b" else { return false }
+    guard fen[2] == "-" || fen[2].allSatisfy({ "KQkqABCDEFGHabcdefgh".contains($0) }) else {
+        return false
+    }
+    guard fen[3] == "-" || fen[3].range(of: #"^[a-h][36]$"#, options: .regularExpression) != nil else {
+        return false
+    }
+    if fen.count == 6 {
+        guard let halfmove = Int(fen[4]), halfmove >= 0,
+              let fullmove = Int(fen[5]), fullmove >= 1 else {
+            return false
+        }
+    }
+
+    if movesIndex < tokens.endIndex {
+        let moves = tokens[(movesIndex + 1)...]
+        guard !moves.isEmpty else { return false }
+        guard moves.allSatisfy({
+            $0.range(of: #"^[a-h][1-8][a-h][1-8][nbrq]?$"#, options: .regularExpression) != nil
+        }) else {
+            return false
+        }
+    }
+    return true
+}
+
+private extension SFEngineSoakRunner.PositionSpec {
+    var isValid: Bool {
+        switch self {
+        case .startpos:
+            return true
+        case .fen(let value):
+            return isValidFENWithOptionalMoves(value)
+        }
     }
 }

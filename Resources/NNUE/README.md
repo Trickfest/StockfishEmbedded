@@ -8,7 +8,10 @@ Scripts/download-nnue.sh
 ```
 
 The script reads the required filename from Stockfish's current
-`EvalFileDefaultName` and downloads the matching network into this directory.
+`EvalFileDefaultName`, downloads the matching network into this directory, and
+verifies that its SHA-256 digest begins with the hash encoded in the `nn-*.nnue`
+filename. Existing files are verified before they are reused; pass `--force`
+to download a fresh copy.
 If you need to do it manually, use the filename in
 `ThirdParty/Stockfish/src/evaluate.h`:
 

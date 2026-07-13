@@ -11,6 +11,49 @@
 import Foundation
 import XCTest
 
+private final class SFEngineHolder: @unchecked Sendable {
+    private let lock = NSLock()
+    private var engine: SFEngine?
+
+    func store(_ engine: SFEngine) {
+        lock.lock()
+        self.engine = engine
+        lock.unlock()
+    }
+
+    func stop() {
+        lock.lock()
+        let engine = engine
+        lock.unlock()
+        engine?.stop()
+    }
+
+    func start() {
+        lock.lock()
+        let engine = engine
+        lock.unlock()
+        engine?.start()
+    }
+}
+
+private final class CallbackCounter: @unchecked Sendable {
+    private let lock = NSLock()
+    private var count = 0
+
+    func increment() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        count += 1
+        return count
+    }
+
+    var value: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return count
+    }
+}
+
 final class SFEngineTests: XCTestCase {
     private struct PerftCase {
         let name: String
@@ -81,6 +124,7 @@ final class SFEngineTests: XCTestCase {
     }
 
     func testContractStartAndStopAreIdempotent() {
+        harness.stop()
         let engine = SFEngine(lineHandler: { _ in })
 
         engine.start()
@@ -89,7 +133,31 @@ final class SFEngineTests: XCTestCase {
         engine.stop()
     }
 
+    func testContractDefaultInitializerSafelyDiscardsOutput() {
+        harness.stop()
+        let engine = SFEngine()
+
+        engine.start()
+        engine.sendCommand("uci")
+        engine.stop()
+    }
+
+    func testContractStopBeforeStartIsTerminal() async {
+        harness.stop()
+        let output = expectation(description: "stopped engine must not start")
+        output.isInverted = true
+        let engine = SFEngine(lineHandler: { _ in output.fulfill() })
+
+        engine.stop()
+        engine.start()
+        engine.sendCommand("uci")
+
+        await fulfillment(of: [output], timeout: 0.25)
+        engine.stop()
+    }
+
     func testContractSendCommandBeforeStartIsIgnoredSafely() async {
+        harness.stop()
         let uciok = expectation(description: "uciok")
         let engine = SFEngine(lineHandler: { line in
             if line == "uciok" {
@@ -107,6 +175,143 @@ final class SFEngineTests: XCTestCase {
         engine.start()
         engine.sendCommand("uci")
         await fulfillment(of: [uciok], timeout: 5.0)
+        engine.stop()
+    }
+
+    func testContractReleaseWithoutExplicitStopTearsDownEngine() {
+        harness.stop()
+
+        weak var releasedEngine: SFEngine?
+        autoreleasepool {
+            let engine = SFEngine(lineHandler: { _ in })
+            releasedEngine = engine
+            engine.start()
+            engine.sendCommand("uci")
+        }
+
+        XCTAssertNil(releasedEngine, "A running engine must not retain its Objective-C owner")
+    }
+
+    func testContractStopIsSafeFromLineHandler() async {
+        harness.stop()
+        let callbackStopped = expectation(description: "callback_stop_returned")
+        let engineHolder = SFEngineHolder()
+
+        let engine = SFEngine(lineHandler: { line in
+            guard line == "uciok" else { return }
+            engineHolder.stop()
+            callbackStopped.fulfill()
+        })
+        engineHolder.store(engine)
+
+        engine.start()
+        engine.sendCommand("uci")
+        await fulfillment(of: [callbackStopped], timeout: 5.0)
+        engine.stop()
+    }
+
+    func testContractCallbackStopSuppressesAlreadyQueuedOutput() async {
+        harness.stop()
+        let firstCallbackStarted = expectation(description: "first callback started")
+        let allowCallbackToStop = DispatchSemaphore(value: 0)
+        let callbackStopReturned = expectation(description: "callback stop returned")
+        let engineHolder = SFEngineHolder()
+        let callbackCounter = CallbackCounter()
+
+        let engine = SFEngine(lineHandler: { _ in
+            guard callbackCounter.increment() == 1 else { return }
+            firstCallbackStarted.fulfill()
+            _ = allowCallbackToStop.wait(timeout: .now() + 5)
+            engineHolder.stop()
+            callbackStopReturned.fulfill()
+        })
+        engineHolder.store(engine)
+
+        engine.start()
+        await fulfillment(of: [firstCallbackStarted], timeout: 5.0)
+        engine.sendCommand("uci")
+        try? await Task.sleep(for: .milliseconds(250))
+        allowCallbackToStop.signal()
+
+        await fulfillment(of: [callbackStopReturned], timeout: 5.0)
+        try? await Task.sleep(for: .milliseconds(250))
+        XCTAssertEqual(callbackCounter.value, 1)
+        engine.stop()
+    }
+
+    func testContractConcurrentInstanceIsRejectedAndCanRetryLater() async {
+        let rejected = expectation(description: "second_instance_rejected")
+        let retryStarted = expectation(description: "second_instance_retry_started")
+        let contender = SFEngine(lineHandler: { line in
+            if line == "info string StockfishEmbedded error: another SFEngine instance is already active" {
+                rejected.fulfill()
+            } else if line == "uciok" {
+                retryStarted.fulfill()
+            }
+        })
+
+        contender.start()
+        await fulfillment(of: [rejected], timeout: 2.0)
+
+        harness.send("isready")
+        let originalReady = await harness.waitForLine(timeout: 5.0, matching: { $0 == "readyok" })
+        XCTAssertEqual(originalReady, "readyok")
+
+        harness.stop()
+        contender.start()
+        contender.sendCommand("uci")
+        await fulfillment(of: [retryStarted], timeout: 5.0)
+        contender.stop()
+    }
+
+    func testContractRejectsUnsafeCommandShapesWithoutBreakingUCI() async {
+        harness.stop()
+        let multilineRejected = expectation(description: "multiline_rejected")
+        let nulRejected = expectation(description: "nul_rejected")
+        let debugLogRejected = expectation(description: "debug_log_rejected")
+        let uciAccepted = expectation(description: "single_line_accepted")
+
+        let engine = SFEngine(lineHandler: { line in
+            switch line {
+            case "info string StockfishEmbedded error: command contains more than one line":
+                multilineRejected.fulfill()
+            case "info string StockfishEmbedded error: command contains NUL":
+                nulRejected.fulfill()
+            case "info string StockfishEmbedded error: Debug Log File is unsupported by the embedded stream bridge":
+                debugLogRejected.fulfill()
+            case "uciok":
+                uciAccepted.fulfill()
+            default:
+                break
+            }
+        })
+
+        engine.start()
+        engine.sendCommand("uci\nisready")
+        engine.sendCommand("\0uci")
+        engine.sendCommand("setoption name Debug Log File value /tmp/stockfish.log")
+        engine.sendCommand("uci\r\n")
+
+        await fulfillment(
+            of: [multilineRejected, nulRejected, debugLogRejected, uciAccepted],
+            timeout: 5.0
+        )
+        engine.stop()
+    }
+
+    func testContractConcurrentStartAndStopCallsDoNotRaceLifecycle() {
+        harness.stop()
+        let engine = SFEngine(lineHandler: { _ in })
+        let engineHolder = SFEngineHolder()
+        engineHolder.store(engine)
+
+        DispatchQueue.concurrentPerform(iterations: 100) { index in
+            if index.isMultiple(of: 2) {
+                engineHolder.start()
+            } else {
+                engineHolder.stop()
+            }
+        }
         engine.stop()
     }
 
@@ -180,6 +385,7 @@ final class SFEngineTests: XCTestCase {
     }
 
     func testContractStopDuringLongSearchReturnsPromptly() async {
+        harness.stop()
         let localHarness = SFEngineHarness()
 
         do {
@@ -202,6 +408,7 @@ final class SFEngineTests: XCTestCase {
     }
 
     func testContractRepeatedStopsDuringSearchReturnBestmoves() async {
+        harness.stop()
         let localHarness = SFEngineHarness()
 
         do {
@@ -242,6 +449,7 @@ final class SFEngineTests: XCTestCase {
     }
 
     func testContractRepeatedActiveSearchStopsAllowFreshEngineStarts() async {
+        harness.stop()
         for attempt in 1...5 {
             let localHarness = SFEngineHarness()
 
@@ -853,6 +1061,114 @@ final class SFEngineTests: XCTestCase {
     private static func isValidBestmoveToken(_ token: String) -> Bool {
         let range = NSRange(token.startIndex..<token.endIndex, in: token)
         return validBestmoveRegex.firstMatch(in: token, options: [], range: range) != nil
+    }
+}
+
+private final class SoakEventRecorder: @unchecked Sendable {
+    private let lock = NSLock()
+    private var storage: [SFEngineSoakRunner.Event] = []
+
+    func append(_ event: SFEngineSoakRunner.Event) {
+        lock.lock()
+        storage.append(event)
+        lock.unlock()
+    }
+
+    var events: [SFEngineSoakRunner.Event] {
+        lock.lock()
+        defer { lock.unlock() }
+        return storage
+    }
+}
+
+final class SFEngineSoakRunnerTests: XCTestCase {
+    func testInvalidConfigurationFailsBeforeStartingEngine() async {
+        let recorder = SoakEventRecorder()
+        let runner = SFEngineSoakRunner(configuration: .init(
+            positions: [.startpos],
+            searchLimit: .depth(0),
+            maxIterations: 1
+        ))
+
+        let summary = await runner.run { recorder.append($0) }
+
+        XCTAssertEqual(summary.iterationsAttempted, 0)
+        XCTAssertEqual(summary.errors, 1)
+        XCTAssertTrue(recorder.events.contains(.error("Search depth must be greater than zero")))
+    }
+
+    func testCompletedIterationEmitsOnlyBestmoveToken() async {
+        let recorder = SoakEventRecorder()
+        let runner = SFEngineSoakRunner(configuration: .init(
+            positions: [.startpos],
+            searchLimit: .moveTimeMillis(20),
+            maxIterations: 1,
+            perMoveTimeout: .seconds(5)
+        ))
+
+        let summary = await runner.run { recorder.append($0) }
+        let moves = recorder.events.compactMap { event -> String? in
+            guard case .iterationCompleted(_, let bestmove, _) = event else { return nil }
+            return bestmove
+        }
+
+        XCTAssertEqual(summary.iterationsCompleted, 1)
+        XCTAssertEqual(moves.count, 1)
+        XCTAssertNotNil(
+            moves[0].range(of: #"^[a-h][1-8][a-h][1-8][nbrq]?$"#, options: .regularExpression)
+        )
+    }
+
+    func testRecoveredTimeoutConsumesTerminalBestmoveBeforeNextPosition() async {
+        let recorder = SoakEventRecorder()
+        let runner = SFEngineSoakRunner(configuration: .init(
+            positions: [
+                .startpos,
+                .fen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1")
+            ],
+            searchLimit: .moveTimeMillis(5_000),
+            maxIterations: 2,
+            perMoveTimeout: .milliseconds(1),
+            stopTimeout: .seconds(5)
+        ))
+
+        let summary = await runner.run { recorder.append($0) }
+        let timeoutIndices = recorder.events.compactMap { event -> Int? in
+            guard case .timeout(let index, _, _) = event else { return nil }
+            return index
+        }
+
+        XCTAssertEqual(summary.iterationsAttempted, 2)
+        XCTAssertEqual(summary.iterationsCompleted, 0)
+        XCTAssertEqual(summary.timeouts, 2)
+        XCTAssertEqual(summary.errors, 0)
+        XCTAssertEqual(timeoutIndices, [0, 1])
+    }
+
+    func testStopFromStartedEventIsObservedPromptly() async {
+        let recorder = SoakEventRecorder()
+        let runner = SFEngineSoakRunner(configuration: .init(
+            positions: [.startpos],
+            searchLimit: .depth(30),
+            maxIterations: 10,
+            handshakeTimeout: .seconds(5),
+            delayBetweenIterations: .seconds(10)
+        ))
+
+        let clock = ContinuousClock()
+        let start = clock.now
+        let summary = await runner.run { event in
+            recorder.append(event)
+            if case .started = event {
+                runner.stop()
+            }
+        }
+        let elapsed = start.duration(to: clock.now)
+
+        XCTAssertEqual(summary.iterationsAttempted, 0)
+        XCTAssertEqual(summary.errors, 0)
+        XCTAssertTrue(recorder.events.contains(.stopped))
+        XCTAssertLessThan(elapsed, .seconds(2))
     }
 }
 

@@ -16,6 +16,8 @@ NNUE weights are not in Git. Download the required net before building:
 ```
 Scripts/download-nnue.sh
 ```
+The script verifies the SHA-256 prefix encoded in the Stockfish network
+filename before accepting a cached or downloaded file.
 
 ## Updating vendored Stockfish
 Stockfish is vendored in `ThirdParty/Stockfish` with `git subtree --squash`.
@@ -128,6 +130,25 @@ xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineCLITestSwift -co
 xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineTestSwiftUI -configuration Debug -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
 ```
 
+Run the complete non-interactive local gate with:
+```
+Scripts/validate.sh
+```
+
+## GitHub-hosted validation
+
+StockfishEmbedded intentionally has no root GitHub Actions workflow. The
+required NNUE network is not stored in Git, and the complete validation gate is
+run locally with `Scripts/validate.sh`. A manually dispatched hosted workflow
+may be added later with an explicit NNUE download and integrity check, but it is
+currently deferred.
+
+Do not add automatic `push`, `pull_request`, or scheduled validation triggers.
+Until a manual workflow is intentionally introduced, neither the presence nor
+successful completion of a GitHub Actions run is a completion, merge, or
+release criterion. Local validation remains the expected evidence for relevant
+changes.
+
 ## Soak tests (CLI)
 ```
 xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineCLISoakTestSwift -configuration Debug -destination 'platform=macOS,arch=arm64' -derivedDataPath build
@@ -137,7 +158,13 @@ xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineCLISoakTestSwift
 ## Notes
 - Stockfish sources are vendored via `git subtree` and kept unmodified.
 - `SFEngine` is intended for single start/stop per instance.
-- Bitcode is disabled for iOS builds.
+- Only one `SFEngine` may be active per process because the embedded shim
+  redirects process-wide C++ standard streams; a concurrent start is rejected.
+- Line callbacks arrive in order on a wrapper-owned serial background queue.
+- `stop` is terminal even before `start`; callback-initiated stop suppresses
+  callbacks that were still queued behind the calling handler.
+- Treat `sendCommand` input as trusted/generated UCI. The wrapper rejects
+  multiline, NUL-containing, oversized, and `Debug Log File` commands.
 - Keep standardized GPL source headers on this repo's owned wrapper, smoke-test,
   and test sources. Do not rewrite or normalize headers inside
   `ThirdParty/Stockfish`; those files belong to upstream Stockfish.

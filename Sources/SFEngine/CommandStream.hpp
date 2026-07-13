@@ -41,7 +41,7 @@ class CommandStreambuf: public std::streambuf {
             return traits_type::eof();
 
         // Ensure each command ends with a newline so UCI parsing works.
-        if (!current_.empty() && current_.back() != '\n')
+        if (current_.empty() || current_.back() != '\n')
             current_.push_back('\n');
 
         char* data = current_.data();

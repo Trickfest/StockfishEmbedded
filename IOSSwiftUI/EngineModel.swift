@@ -27,25 +27,25 @@ final class EngineModel {
     var log: String = ""
     // Whether the engine is currently running a search.
     var isRunning = false
+    // Whether native teardown is still in progress.
+    var isStopping = false
     // User-facing status text (Idle / Running / Finished).
     var status: String = "Idle"
 
-    deinit {
-        // Ensure the engine is torn down even if the view model is released while running.
-        Task { @MainActor [weak self] in
-            self?.stop()
-        }
+    var canRun: Bool {
+        !isRunning && !isStopping
     }
 
     // Starts a fixed smoke-test sequence: init UCI, set a position, run a short search.
     func runSmokeTest() {
-        guard !isRunning else { return }
+        guard canRun else { return }
         startNewRun()
+        let token = runToken
 
         // Capture engine output and forward it onto the main actor for UI updates.
         let engine = SFEngine(lineHandler: { [weak self] line in
-            Task { @MainActor in
-                self?.handleLine(line)
+            DispatchQueue.main.async { [weak self] in
+                self?.handleLine(line, token: token)
             }
         })
         self.engine = engine
@@ -70,7 +70,11 @@ final class EngineModel {
     // Clears the log but keeps the running status intact.
     func clear() {
         log = ""
-        status = isRunning ? "Running" : "Idle"
+        if isRunning {
+            status = "Running"
+        } else if !isStopping {
+            status = "Idle"
+        }
     }
 
     // Reset state and cancel any prior run before starting a new one.
@@ -78,6 +82,7 @@ final class EngineModel {
         log = ""
         status = "Running"
         isRunning = true
+        isStopping = false
         runToken = UUID()
         timeoutTask?.cancel()
         timeoutTask = nil
@@ -97,7 +102,8 @@ final class EngineModel {
     }
 
     // Append each line and finish when we see the UCI "bestmove".
-    private func handleLine(_ line: String) {
+    private func handleLine(_ line: String, token: UUID) {
+        guard token == runToken, isRunning else { return }
         append(line)
         if line.hasPrefix("bestmove") {
             finishRun(reason: "bestmove")
@@ -108,19 +114,32 @@ final class EngineModel {
     private func finishRun(reason: String) {
         guard isRunning else { return }
         isRunning = false
+        isStopping = true
         timeoutTask?.cancel()
         timeoutTask = nil
 
         let engineToStop = engine
         engine = nil
-        status = "Finished (\(reason))"
+        status = "Stopping (\(reason))"
+        let token = runToken
 
         // Stop the engine off the main thread to avoid blocking UI updates.
         if let engineToStop {
             DispatchQueue.global(qos: .userInitiated).async {
                 engineToStop.stop()
+                DispatchQueue.main.async { [weak self] in
+                    self?.completeStop(reason: reason, token: token)
+                }
             }
+        } else {
+            completeStop(reason: reason, token: token)
         }
+    }
+
+    private func completeStop(reason: String, token: UUID) {
+        guard token == runToken, isStopping else { return }
+        isStopping = false
+        status = "Finished (\(reason))"
     }
 
     // Append a line to the log without losing existing output.

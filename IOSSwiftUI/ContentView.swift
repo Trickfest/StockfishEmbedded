@@ -29,7 +29,7 @@ struct ContentView: View {
                     }
                     .font(.body)
                     .buttonStyle(.borderedProminent)
-                    .disabled(model.isRunning)
+                    .disabled(!model.canRun)
                     .controlSize(.regular)
 
                     Button {
@@ -56,7 +56,7 @@ struct ContentView: View {
 
                     // Running indicator + status label.
                     HStack(spacing: 8) {
-                        if model.isRunning {
+                        if model.isRunning || model.isStopping {
                             ProgressView()
                                 .progressViewStyle(.circular)
                         }
@@ -64,6 +64,9 @@ struct ContentView: View {
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("Engine status")
+                    .accessibilityValue(model.status)
                 }
 
                 Toggle("Auto-scroll", isOn: $autoScroll)

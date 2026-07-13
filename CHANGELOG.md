@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-07-13
+
 ### Added
 
 - Added lifecycle, concurrent-instance, callback-stop/drain, unsafe-command,
@@ -16,6 +18,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Updated vendored Stockfish to upstream commit
+  `9a8dd81dd7f98cbf02f16c59b4377d174d6eb4b5` (official `master` as of
+  2026-07-13).
+- Updated NNUE instructions to use `nn-0ee0657fb25e.nnue`.
+- Audited the embedded UCI shim against upstream `main.cpp` and adopted
+  Stockfish's new `CommandLine` handoff into `UCIEngine`.
 - Deliver engine output in order on a wrapper-owned serial callback queue and
   make callback-initiated shutdown safe; Swift now imports the handler as
   `@Sendable` so its cross-thread capture contract is compiler-visible.

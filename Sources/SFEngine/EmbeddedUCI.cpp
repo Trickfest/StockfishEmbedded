@@ -16,6 +16,7 @@
 #include <locale>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "attacks.h"
@@ -121,15 +122,17 @@ void RunStockfishUCI(std::istream& in, std::ostream& out) {
     Attacks::init();
     Position::init();
 
-    // Stockfish expects argc/argv in its UCIEngine constructor; fake them.
+    // Stockfish expects argc/argv through CommandLine; fake them.
     std::vector<std::string> argvStorage = {"stockfish"};
     std::vector<char*>       argv;
     argv.reserve(argvStorage.size());
     for (auto& arg : argvStorage)
         argv.push_back(arg.data());
 
-    // Construct the UCI engine and initialize tuning/options.
-    auto uci = std::make_unique<UCIEngine>(static_cast<int>(argv.size()), argv.data());
+    // Construct the UCI engine and initialize tuning/options. This mirrors the
+    // CommandLine handoff in the vendored Stockfish main.cpp.
+    auto cli = CommandLine(static_cast<int>(argv.size()), argv.data());
+    auto uci = std::make_unique<UCIEngine>(std::move(cli));
     Tune::init(uci->engine_options());
 
     // Blocking UCI loop; returns when "quit" is received or input closes.

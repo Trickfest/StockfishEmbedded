@@ -554,7 +554,8 @@ std::optional<usize> str_to_size_t(const std::string& s) {
     errno                           = 0;
     char*                    endptr = nullptr;
     const unsigned long long value  = std::strtoull(s.c_str(), &endptr, 10);
-    if (errno == ERANGE || *endptr != '\0' || value > std::numeric_limits<usize>::max())
+    if (errno == ERANGE || (*endptr != '\0' && !std::isspace(*endptr))
+        || value > std::numeric_limits<usize>::max())
         return std::nullopt;
     return static_cast<usize>(value);
 }
@@ -577,12 +578,15 @@ bool is_whitespace(std::string_view s) {
 fs::path CommandLine::get_binary_directory(fs::path argv0) {
 
 #ifdef _WIN32
-    #ifdef _MSC_VER
-    // Prefer the executable path reported by the CRT when available.
-    wchar_t* pgmptr = nullptr;
-    if (!_get_wpgmptr(&pgmptr) && pgmptr != nullptr && *pgmptr)
-        argv0 = fs::path(pgmptr);
-    #endif
+    // Prefer the executable path reported by Windows. Unlike _get_wpgmptr,
+    // this does not depend on whether the CRT used a narrow or wide entry
+    // point. Windows paths cannot exceed 32767 characters, so a fixed
+    // buffer is always sufficient. Falls back to argv0 if the API fails.
+    constexpr DWORD MaxPath = 32768;
+    wchar_t         path[MaxPath];
+
+    if (const DWORD length = GetModuleFileNameW(nullptr, path, MaxPath))
+        argv0 = fs::path(path, path + length);
 #endif
 
     auto binaryDirectory = argv0.parent_path();

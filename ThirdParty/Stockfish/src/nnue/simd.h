@@ -51,6 +51,10 @@
 
 namespace Stockfish::Eval::NNUE::SIMD {
 
+#if defined(USE_AVX2)
+    #define USE_PAIR_ACTIVATIONS
+#endif
+
 // If vector instructions are enabled, we update and refresh the
 // accumulator tile by tile such that each tile fits in the CPU's
 // vector registers.
@@ -336,64 +340,6 @@ inline __m128i vec_convert_8_16(u64 x) {
 
 #endif
 
-struct Vec16Wrapper {
-#ifdef VECTOR
-    using type = vec_t;
-    static type add(const type& lhs, const type& rhs) { return vec_add_16(lhs, rhs); }
-    static type sub(const type& lhs, const type& rhs) { return vec_sub_16(lhs, rhs); }
-#else
-    using type = BiasType;
-    static type add(const type& lhs, const type& rhs) { return lhs + rhs; }
-    static type sub(const type& lhs, const type& rhs) { return lhs - rhs; }
-#endif
-};
-
-struct Vec32Wrapper {
-#ifdef VECTOR
-    using type = psqt_vec_t;
-    static type add(const type& lhs, const type& rhs) { return vec_add_psqt_32(lhs, rhs); }
-    static type sub(const type& lhs, const type& rhs) { return vec_sub_psqt_32(lhs, rhs); }
-#else
-    using type = PSQTWeightType;
-    static type add(const type& lhs, const type& rhs) { return lhs + rhs; }
-    static type sub(const type& lhs, const type& rhs) { return lhs - rhs; }
-#endif
-};
-
-enum UpdateOperation {
-    Add,
-    Sub
-};
-
-template<typename VecWrapper,
-         UpdateOperation... ops,
-         std::enable_if_t<sizeof...(ops) == 0, bool> = true>
-typename VecWrapper::type fused(const typename VecWrapper::type& in) {
-    return in;
-}
-
-template<typename VecWrapper,
-         UpdateOperation update_op,
-         UpdateOperation... ops,
-         typename T,
-         typename... Ts,
-         std::enable_if_t<is_all_same_v<typename VecWrapper::type, T, Ts...>, bool> = true,
-         std::enable_if_t<sizeof...(ops) == sizeof...(Ts), bool>                    = true>
-typename VecWrapper::type
-fused(const typename VecWrapper::type& in, const T& operand, const Ts&... operands) {
-    switch (update_op)
-    {
-    case Add :
-        return fused<VecWrapper, ops...>(VecWrapper::add(in, operand), operands...);
-    case Sub :
-        return fused<VecWrapper, ops...>(VecWrapper::sub(in, operand), operands...);
-    default :
-        static_assert(update_op == Add || update_op == Sub,
-                      "Only Add and Sub are currently supported.");
-        return typename VecWrapper::type();
-    }
-}
-
 #if defined(USE_AVX512)
 
 [[maybe_unused]] static int m512_hadd(__m512i sum, int bias) {
@@ -580,34 +526,6 @@ class SIMDTiling {
     static_assert(PSQTBuckets % PsqtTileHeight == 0, "PsqtTileHeight must divide PSQTBuckets");
 #endif
 };
-
-#if defined(USE_RVV)
-
-    #define RVV_DEFINE_DPBUSD(A, W, H) \
-        inline vint32##A##_t rvv_dpbusd_##A(vuint8##A##_t a, vint8##A##_t b, usize n) { \
-            vint16##W##_t  prod   = __riscv_vwmulsu_vv_i16##W(b, a, 4 * n); \
-            vuint32##W##_t prod32 = __riscv_vreinterpret_v_u16##W##_u32##W( \
-              __riscv_vreinterpret_v_i16##W##_u16##W(prod)); \
-            vint16##A##_t even = \
-              __riscv_vreinterpret_v_u16##A##_i16##A(__riscv_vnsrl_wx_u16##A(prod32, 0, 2 * n)); \
-            vint16##A##_t odd = \
-              __riscv_vreinterpret_v_u16##A##_i16##A(__riscv_vnsrl_wx_u16##A(prod32, 16, 2 * n)); \
-            vuint32##A##_t pairs = __riscv_vreinterpret_v_u16##A##_u32##A( \
-              __riscv_vreinterpret_v_i16##A##_u16##A(__riscv_vadd_vv_i16##A(even, odd, 2 * n))); \
-            vint16##H##_t lo = \
-              __riscv_vreinterpret_v_u16##H##_i16##H(__riscv_vnsrl_wx_u16##H(pairs, 0, n)); \
-            vint16##H##_t hi = \
-              __riscv_vreinterpret_v_u16##H##_i16##H(__riscv_vnsrl_wx_u16##H(pairs, 16, n)); \
-            return __riscv_vwadd_vv_i32##A(lo, hi, n); \
-        }
-
-RVV_DEFINE_DPBUSD(m1, m2, mf2)
-RVV_DEFINE_DPBUSD(m2, m4, m1)
-RVV_DEFINE_DPBUSD(m4, m8, m2)
-
-    #undef RVV_DEFINE_DPBUSD
-
-#endif
 
 }
 

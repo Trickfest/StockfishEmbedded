@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-08-06
+
+### Changed
+
+- Updated vendored Stockfish to upstream commit
+  `762dd1da9a5db458180b2c5db6c53dc40ec61e1a` (official `master` as of
+  2026-08-06).
+- Updated Stockfish's embedded source list for the SFNNv16 architecture and
+  added its new `pp_3wide.cpp` feature implementation to both library targets.
+- Updated NNUE instructions to use `nn-ab28990d4ea3.nnue`.
+- Audited the embedded UCI shim against upstream `main.cpp` and removed the
+  retired `Bitboards::init()` startup step.
+
 ## [1.8.0] - 2026-07-13
 
 ### Added

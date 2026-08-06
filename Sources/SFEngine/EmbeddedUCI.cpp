@@ -20,7 +20,6 @@
 #include <vector>
 
 #include "attacks.h"
-#include "bitboard.h"
 #include "misc.h"
 #include "position.h"
 #include "tune.h"
@@ -118,7 +117,6 @@ void RunStockfishUCI(std::istream& in, std::ostream& out) {
     std::cout << engine_info() << std::endl;
 
     // Mimic Stockfish's main() setup so evaluation tables and options are ready.
-    Bitboards::init();
     Attacks::init();
     Position::init();
 

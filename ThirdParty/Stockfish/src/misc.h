@@ -141,10 +141,10 @@ std::filesystem::path path_from_utf8(const std::string& path);
 // Returns std::nullopt if the file does not exist.
 std::optional<std::string> read_file_to_string(const std::string& path);
 
-void dbg_hit_on(bool cond, int slot = 0);
-void dbg_mean_of(i64 value, int slot = 0);
-void dbg_stdev_of(i64 value, int slot = 0);
-void dbg_extremes_of(i64 value, int slot = 0);
+bool dbg_hit_on(bool cond, int slot = 0);
+i64  dbg_mean_of(i64 value, int slot = 0);
+i64  dbg_stdev_of(i64 value, int slot = 0);
+i64  dbg_extremes_of(i64 value, int slot = 0);
 void dbg_correl_of(i64 value1, i64 value2, int slot = 0);
 void dbg_print();
 void dbg_clear();
@@ -552,12 +552,12 @@ void move_to_front(std::vector<T>& vec, Predicate pred) {
 #endif
 
 #if defined(__GNUC__)
-    #define sf_always_inline __attribute__((always_inline))
+    #define sf_always_inline inline __attribute__((always_inline))
 #elif defined(_MSC_VER)
     #define sf_always_inline __forceinline
 #else
-    // do nothing for other compilers
-    #define sf_always_inline
+    // plain inline for other compilers
+    #define sf_always_inline inline
 #endif
 
 #if defined(__clang__)

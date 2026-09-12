@@ -195,23 +195,17 @@ constexpr Bitboard safe_destination(Square s, int step) {
 }
 
 constexpr Bitboard sliding_attack(PieceType pt, Square sq, Bitboard occupied) {
-    Bitboard            attacks = 0, dest = 0;
+    Bitboard            attacks             = 0;
     constexpr Direction RookDirections[4]   = {NORTH, SOUTH, EAST, WEST};
     constexpr Direction BishopDirections[4] = {NORTH_EAST, SOUTH_EAST, SOUTH_WEST, NORTH_WEST};
 
     for (Direction d : (pt == ROOK ? RookDirections : BishopDirections))
-    {
-        Square s = sq;
-        while ((dest = safe_destination(s, d)))
+        for (Square s = sq; Bitboard dest = safe_destination(s, d); s += d)
         {
             attacks |= dest;
-            s += d;
             if (occupied & dest)
-            {
                 break;
-            }
         }
-    }
 
     return attacks;
 }
@@ -260,18 +254,6 @@ inline constexpr auto PseudoAttacks = []() constexpr {
         attacks[KNIGHT][s1] = pseudo_attacks(KNIGHT, s1);
         attacks[QUEEN][s1] = attacks[BISHOP][s1] = pseudo_attacks(BISHOP, s1);
         attacks[QUEEN][s1] |= attacks[ROOK][s1]  = pseudo_attacks(ROOK, s1);
-    }
-
-    return attacks;
-}();
-
-inline constexpr auto PawnPushOrAttacks = []() constexpr {
-    std::array<std::array<Bitboard, SQUARE_NB>, COLOR_NB> attacks{};
-
-    for (Square s1 = SQ_A1; s1 <= SQ_H8; ++s1)
-    {
-        attacks[WHITE][s1] = pawn_single_push_bb(WHITE, square_bb(s1)) | PseudoAttacks[WHITE][s1];
-        attacks[BLACK][s1] = pawn_single_push_bb(BLACK, square_bb(s1)) | PseudoAttacks[BLACK][s1];
     }
 
     return attacks;

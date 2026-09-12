@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-09-12
+
+### Changed
+
+- Updated vendored Stockfish to upstream commit
+  `59aae690f91d6f69aac194f447d84b4a2c3be778` (official `master` as of
+  2026-09-12), incorporating Stockfish 19 and twelve subsequent `master`
+  commits.
+- Updated NNUE instructions to use `nn-1a298aa575a0.nnue`.
+- Audited the embedded UCI shim against upstream `main.cpp`; no shim code
+  changes were required for this Stockfish snapshot.
+
 ## [1.9.0] - 2026-08-06
 
 ### Changed

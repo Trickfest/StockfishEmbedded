@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.11.0] - 2026-09-28
+
+### Changed
+
+- Updated vendored Stockfish to upstream commit
+  `0a215d6c9e48856ef630013b8ab8312941a59057` (official `master` as of
+  2026-09-28), incorporating 22 subsequent commits after the `v1.10.0`
+  snapshot, including search and evaluation tuning, a deep-recursion fix,
+  performance work, and Apple/universal-build maintenance.
+- Updated NNUE instructions to use `nn-134a887f4c8f.nnue`.
+- Adopted Xcode 27 recommended project settings while keeping upstream
+  Stockfish sources warning-suppressed and limiting `-Wno-comma` to the
+  wrapper translation unit that includes Stockfish headers.
+- Audited the embedded UCI shim against upstream `main.cpp`; no shim code
+  changes were required for this Stockfish snapshot.
+
 ## [1.10.0] - 2026-09-12
 
 ### Changed

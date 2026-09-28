@@ -17,5 +17,5 @@ If you need to do it manually, use the filename in
 
 ```
 mkdir -p Resources/NNUE
-curl -L --fail https://tests.stockfishchess.org/api/nn/nn-1a298aa575a0.nnue -o Resources/NNUE/nn-1a298aa575a0.nnue
+curl -L --fail https://tests.stockfishchess.org/api/nn/nn-134a887f4c8f.nnue -o Resources/NNUE/nn-134a887f4c8f.nnue
 ```

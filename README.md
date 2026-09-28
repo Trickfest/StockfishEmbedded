@@ -11,7 +11,8 @@ git clone <repo-url>
 
 For a realistic iOS app that uses this engine wrapper, see
 [SwiftChessDemo](https://github.com/Trickfest/SwiftChessDemo). The demo combines
-`StockfishEmbedded` with
+`StockfishEmbedded`,
+[ArasanEmbedded](https://github.com/Trickfest/ArasanEmbedded), and
 [SwiftChessTools](https://github.com/Trickfest/SwiftChessTools) to show a
 playable SwiftUI chess app with app-owned game state, legal move validation,
 serialized Stockfish searches, UCI parsing, evaluation display, move

@@ -4,6 +4,10 @@ This repo embeds the Stockfish chess engine as an in-process static library for 
 wrapped by a small Objective-C API (`SFEngine`) that is safe to call from Swift.
 
 ## Layout
+- `Package.swift` – SwiftPM source-library foundation for the `SFEngine`
+  product.
+- `.spi.yml` – Swift Package Index build configurations for supported package
+  platforms.
 - `StockfishEmbedded.xcodeproj` – Xcode project and build targets.
 - `Sources/` – adapter layer, CLI smoke tests, and soak runner.
 - `IOSSwiftUI/` – SwiftUI smoke test app (iOS/iPadOS).
@@ -18,6 +22,19 @@ Scripts/download-nnue.sh
 ```
 The script verifies the SHA-256 prefix encoded in the Stockfish network
 filename before accepting a cached or downloaded file.
+
+The SwiftPM target is the exception: it defines `NNUE_EMBEDDING_OFF`, so
+`swift package dump-package`, `swift build`, and the package import test must
+work from a clean checkout without the ignored network file. Runtime callers
+must create `SFEngine` with `initWithNetworkFileURL:lineHandler:` and keep that
+local file available until the engine stops. The wrapper preflights it with
+Stockfish's own parser before entering the UCI loop, preventing an invalid
+network from reaching Stockfish's process-terminating verification path.
+
+`swift test` runs the external-network search when the ignored local file is
+present and skips only that asset-dependent test in a clean checkout. Missing
+configuration and incompatible-network behavior remain covered without the
+asset. Do not add the network as a SwiftPM resource or build-time download.
 
 ## Updating vendored Stockfish
 Stockfish is vendored in `ThirdParty/Stockfish` with `git subtree --squash`.
@@ -111,6 +128,18 @@ xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineCLISoakTestSwift
    builds of the app require a Development Team unless code signing is disabled
    for build-only validation.
 
+## Build (SwiftPM foundation)
+```
+swift package dump-package
+swift build
+swift test
+```
+
+These commands must not download or require an NNUE file. The package is
+Apple-arm64-only and uses explicit NEON compilation settings. Runtime searches
+through the SwiftPM product require
+`SFEngine(networkFileURL:lineHandler:)` with a caller-owned local network file.
+
 ## Build (CLI)
 ```
 # macOS static lib (Debug)
@@ -158,14 +187,22 @@ xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineCLISoakTestSwift
 
 ## Notes
 - Stockfish sources are vendored via `git subtree` and kept unmodified.
-- `SFEngine` is intended for single start/stop per instance.
+- `SFEngine` is intended for one start and one terminal stop per instance, with
+  optional suspend/resume cycles between completed searches. Suspension joins
+  the UCI-loop thread and releases the stream redirect while retaining the
+  loaded engine and NNUE network.
 - Only one `SFEngine` may be active per process because the embedded shim
   redirects process-wide C++ standard streams; a concurrent start is rejected.
+- A suspended instance retains the wrapper's single-engine ownership lease;
+  resume that instance rather than starting a second `SFEngine`.
 - Line callbacks arrive in order on a wrapper-owned serial background queue.
 - `stop` is terminal even before `start`; callback-initiated stop suppresses
   callbacks that were still queued behind the calling handler.
 - Treat `sendCommand` input as trusted/generated UCI. The wrapper rejects
   multiline, NUL-containing, oversized, and `Debug Log File` commands.
+- SwiftPM builds also reject raw `EvalFile` changes. External NNUE selection is
+  fixed at initialization so every search uses the preflighted caller-owned
+  file.
 - Keep standardized GPL source headers on this repo's owned wrapper, smoke-test,
   and test sources. Do not rewrite or normalize headers inside
   `ThirdParty/Stockfish`; those files belong to upstream Stockfish.

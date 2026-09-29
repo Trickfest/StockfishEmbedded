@@ -8,7 +8,11 @@
 // See the LICENSE file for more information.
 //
 
-// Keep the historical Xcode-project header path working while SwiftPM exposes
-// the canonical public header from Sources/SFEngine/include.
+// Keep package-specific warning policy outside the vendored Stockfish snapshot.
+// The result is intentionally narrowed to `int` in the upstream implementation.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshorten-64-to-32"
 
-#import "include/SFEngine.h"
+#include "../../ThirdParty/Stockfish/src/evaluate.cpp"
+
+#pragma clang diagnostic pop

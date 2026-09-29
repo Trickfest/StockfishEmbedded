@@ -6,6 +6,53 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.12.0] - 2026-09-29
+
+### Added
+
+- Added a root Swift Package Manager manifest exposing the existing `SFEngine`
+  Objective-C API as a source library for iOS/iPadOS and macOS.
+- Added Swift Package Index build configuration for the supported iOS and
+  Apple-silicon macOS package schemes.
+- Added a package-level Swift import test that constructs and stops an engine
+  without requiring the ignored NNUE asset.
+- Added `SFEngine(networkFileURL:lineHandler:)` and
+  `SFEngine.defaultNetworkFileName` so SwiftPM clients can supply a bundled or
+  downloaded NNUE network without making it a package resource.
+- Added package runtime coverage for missing configuration, incompatible
+  networks, an end-to-end search with the locally downloaded official net, and
+  preserving that loaded network across a suspend/resume cycle.
+- Added `suspend()` and `resume()` so a client that serializes multiple
+  in-process engines can temporarily release Stockfish's process-wide stream
+  ownership without reconstructing the engine or reparsing its NNUE network.
+
+### Changed
+
+- Compile the SwiftPM target with `NNUE_EMBEDDING_OFF` so manifest validation
+  and clean-clone package builds do not download or embed the large network.
+  Runtime clients now provide a local network URL, while the existing Xcode
+  targets continue to embed the local NNUE file.
+- Preflight caller-provided networks with Stockfish's own loader before entering
+  the UCI loop, and reserve the raw `EvalFile` option for the wrapper-managed
+  path in SwiftPM builds.
+- Reworked the README around a newcomer-focused SwiftPM quick start that
+  explains NNUE, provides verified download details, shows app-resource setup,
+  and distinguishes the preferred package path from legacy Xcode integration.
+- Extended the local validation gate to check the documented NNUE filename and
+  full digest and to build and test a temporary clean package copy without the
+  ignored network asset.
+- Keep one Stockfish UCI engine alive across suspended UCI-loop threads, while
+  retaining terminal `stop()` semantics and the one-`SFEngine`-per-process
+  ownership rule.
+
+### Fixed
+
+- Make the SwiftUI smoke app's nested shutdown closures consistently capture
+  the model weakly, resolving the Swift 6.4 ownership warning.
+- Keep the SwiftPM build warning-free without modifying vendored Stockfish by
+  compiling its evaluation implementation through a narrowly scoped diagnostic
+  shim.
+
 ## [1.11.0] - 2026-09-28
 
 ### Changed

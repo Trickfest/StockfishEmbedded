@@ -13,11 +13,35 @@
 #pragma once
 
 #include <iosfwd>
+#include <memory>
+#include <optional>
+#include <string>
+#include <string_view>
 
 namespace SFEmbedded {
 
-// Runs the Stockfish UCI loop using caller-provided streams by temporarily redirecting
-// process-wide std::cin/std::cout. The SFEngine wrapper enforces exclusive ownership.
-void RunStockfishUCI(std::istream& in, std::ostream& out);
+// Owns one Stockfish UCI engine across temporary stream-ownership suspensions.
+// Each run redirects process-wide std::cin/std::cout only until the UCI loop
+// receives quit. Keeping this session alive preserves the parsed NNUE network
+// while another embedded engine temporarily owns those streams.
+class EmbeddedUCISession {
+   public:
+    explicit EmbeddedUCISession(std::optional<std::string> networkFilePath = std::nullopt);
+    ~EmbeddedUCISession();
+
+    EmbeddedUCISession(const EmbeddedUCISession&)            = delete;
+    EmbeddedUCISession(EmbeddedUCISession&&)                 = delete;
+    EmbeddedUCISession& operator=(const EmbeddedUCISession&) = delete;
+    EmbeddedUCISession& operator=(EmbeddedUCISession&&)      = delete;
+
+    void run(std::istream& in, std::ostream& out);
+
+   private:
+    class Impl;
+    std::unique_ptr<Impl> impl_;
+};
+
+// Returns the official NNUE filename declared by the vendored Stockfish build.
+std::string_view DefaultNetworkFileName();
 
 }  // namespace SFEmbedded

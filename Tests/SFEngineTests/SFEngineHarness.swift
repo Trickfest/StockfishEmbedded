@@ -107,6 +107,19 @@ final class SFEngineHarness: @unchecked Sendable {
 
     func startAndBootstrap(timeout: TimeInterval = 10.0) async throws {
         engine?.start()
+        try await bootstrap(timeout: timeout)
+    }
+
+    func suspend() {
+        engine?.suspend()
+    }
+
+    func resumeAndBootstrap(timeout: TimeInterval = 10.0) async throws {
+        engine?.resume()
+        try await bootstrap(timeout: timeout)
+    }
+
+    private func bootstrap(timeout: TimeInterval) async throws {
 
         send("uci")
         guard await waitForLine(timeout: timeout, matching: { $0 == "uciok" }) != nil else {

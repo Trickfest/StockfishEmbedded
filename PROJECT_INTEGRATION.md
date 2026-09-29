@@ -1,12 +1,20 @@
-# Project Integration (No SwiftPM)
+# Legacy Xcode Project Integration (No SwiftPM)
 
 This document describes how to use StockfishEmbedded from another Xcode project
 without Swift Package Manager. Consumers build it from source by adding the
 StockfishEmbedded Xcode project to their app project or workspace.
 
+New integrations should normally use the `SFEngine` Swift package product. It
+requires no bridging header, manual header search path, or `-lc++` setting. See
+the main README's **Quick start with Swift Package Manager** section. Continue
+with this document only when you specifically need the legacy static-library
+targets.
+
 Important:
-- NNUE files are required at build time because they are embedded into the library.
-  See `Resources/NNUE/README.md` for download steps.
+- NNUE is Stockfish's neural-network evaluation data. The file is required at
+  build time for these legacy targets because they embed it into the library.
+  Run `Scripts/download-nnue.sh` first; see `Resources/NNUE/README.md` for
+  details.
 - The current static libraries require iOS/iPadOS 26 or macOS 26.
 - Consumer targets must link the C++ standard library with
   `OTHER_LDFLAGS = $(inherited) -lc++`.
@@ -83,6 +91,13 @@ Prefer UCI search limits for normal move timing, especially
 timeouts are safety cutoffs around waiting for a result. If a timeout fires, the
 app can send `stop`, but that is a cooperative request to Stockfish rather than
 a forced thread interruption.
+
+If the app serially alternates Stockfish with another in-process engine, call
+`suspend()` only after Stockfish has returned `bestmove`. This releases the
+wrapper's process-wide C++ stream redirect but keeps the loaded Stockfish and
+NNUE state. After the other engine has fully stopped, call `resume()`, repeat
+the UCI readiness handshake, and continue. Use `stop()` only for terminal
+teardown; a stopped instance cannot resume.
 
 ## Verification checklist (sanity check)
 - You downloaded NNUE files before building StockfishEmbedded.

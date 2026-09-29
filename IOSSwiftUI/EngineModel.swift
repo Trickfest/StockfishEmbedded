@@ -125,7 +125,7 @@ final class EngineModel {
 
         // Stop the engine off the main thread to avoid blocking UI updates.
         if let engineToStop {
-            DispatchQueue.global(qos: .userInitiated).async {
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 engineToStop.stop()
                 DispatchQueue.main.async { [weak self] in
                     self?.completeStop(reason: reason, token: token)

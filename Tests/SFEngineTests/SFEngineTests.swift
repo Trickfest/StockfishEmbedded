@@ -264,6 +264,36 @@ final class SFEngineTests: XCTestCase {
         contender.stop()
     }
 
+    func testContractSuspendedEngineResumesAndRetainsItsOwnershipLease() async throws {
+        guard await harness.runSearch(
+            positionCommand: "position startpos",
+            goCommand: "go depth 1",
+            timeout: 10.0
+        ) != nil else {
+            return XCTFail("Expected bestmove before suspension")
+        }
+
+        harness.suspend()
+
+        let rejected = expectation(description: "suspended engine retains ownership")
+        let contender = SFEngine(lineHandler: { line in
+            if line == "info string StockfishEmbedded error: another SFEngine instance is already active" {
+                rejected.fulfill()
+            }
+        })
+        contender.start()
+        await fulfillment(of: [rejected], timeout: 2.0)
+        contender.stop()
+
+        try await harness.resumeAndBootstrap(timeout: 5.0)
+        let resumedResult = await harness.runSearch(
+            positionCommand: "position startpos moves e2e4",
+            goCommand: "go depth 1",
+            timeout: 10.0
+        )
+        XCTAssertNotNil(resumedResult)
+    }
+
     func testContractRejectsUnsafeCommandShapesWithoutBreakingUCI() async {
         harness.stop()
         let multilineRejected = expectation(description: "multiline_rejected")
@@ -1185,14 +1215,30 @@ final class EmbeddedUCIParityTests: XCTestCase {
         )
 
         let mainLifecycle = Self.extractStartupLifecycle(from: mainSource)
-        let shimLifecycle = Self.extractStartupLifecycle(from: shimSource)
+        let shimInitialization = Self.extractStartupLifecycle(from: shimSource)
+        var expectedShimInitialization = Array(mainLifecycle.dropLast())
+
+        guard let engineConstructionIndex = expectedShimInitialization.firstIndex(where: {
+            $0 == "UCIEngine heap construction" || $0 == "UCIEngine stack construction"
+        }) else {
+            return XCTFail("Vendored Stockfish main.cpp no longer contains a recognized UCIEngine construction step.")
+        }
+        expectedShimInitialization.insert(
+            "wrapper EvalFile configuration",
+            at: engineConstructionIndex + 1
+        )
 
         XCTAssertEqual(mainLifecycle.last, "UCIEngine loop")
-        XCTAssertEqual(shimLifecycle.last, "UCIEngine loop")
         XCTAssertEqual(
-            shimLifecycle,
-            mainLifecycle,
-            "EmbeddedUCI.cpp must mirror the vendored Stockfish main.cpp startup lifecycle."
+            shimInitialization,
+            expectedShimInitialization,
+            "EmbeddedUCI.cpp must mirror the initialization portion of vendored Stockfish main.cpp, "
+                + "apart from configuring the caller-provided EvalFile immediately after construction."
+        )
+        XCTAssertTrue(
+            Self.hasReusableUCILoop(in: shimSource),
+            "EmbeddedUCISession::Impl::run must initialize once, redirect the process-wide streams, "
+                + "and invoke the retained UCIEngine's loop on every run."
         )
     }
 
@@ -1237,8 +1283,15 @@ final class EmbeddedUCIParityTests: XCTestCase {
                 lifecycle.append("UCIEngine heap construction")
             } else if line.range(of: #"^UCIEngine\s+\w+\("#, options: .regularExpression) != nil {
                 lifecycle.append("UCIEngine stack construction")
+            } else if line == "if (networkFilePath_.has_value()) {" {
+                lifecycle.append("wrapper EvalFile configuration")
+            } else if line.contains("std::istringstream evalFileOption(")
+                        || line.contains("uci_->engine_options().setoption(evalFileOption)") {
+                continue
             } else if line.contains("Tune::init") && line.contains("engine_options") {
                 lifecycle.append("Tune::init engine options")
+            } else if line == "return true;" {
+                break
             } else if line.range(of: #"\buci(->|\.)loop\(\);"#, options: .regularExpression) != nil {
                 lifecycle.append("UCIEngine loop")
                 break
@@ -1255,6 +1308,37 @@ final class EmbeddedUCIParityTests: XCTestCase {
         }
 
         return lifecycle
+    }
+
+    private static func hasReusableUCILoop(in source: String) -> Bool {
+        guard let runStart = source.range(
+            of: "void run(std::istream& in, std::ostream& out) {"
+        ), let runEnd = source.range(
+            of: "\n   private:",
+            range: runStart.upperBound..<source.endIndex
+        ) else {
+            return false
+        }
+
+        let runBody = source[runStart.lowerBound..<runEnd.lowerBound]
+        let requiredStatements = [
+            "if (!uci_ && !initialize(in, out))",
+            "StreamRedirector redirect(in, out);",
+            "uci_->loop();",
+        ]
+        var searchStart = runBody.startIndex
+
+        for statement in requiredStatements {
+            guard let range = runBody.range(
+                of: statement,
+                range: searchStart..<runBody.endIndex
+            ) else {
+                return false
+            }
+            searchStart = range.upperBound
+        }
+
+        return true
     }
 
     private enum RepositoryLayoutError: Error {

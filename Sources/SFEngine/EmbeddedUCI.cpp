@@ -12,15 +12,21 @@
 
 #include "EmbeddedUCI.hpp"
 
+#include <filesystem>
 #include <iostream>
 #include <locale>
 #include <memory>
+#include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "attacks.h"
+#include "evaluate.h"
 #include "misc.h"
+#include "nnue/network.h"
+#include "nnue/nnue_misc.h"
 #include "position.h"
 #include "tune.h"
 #include "uci.h"
@@ -109,32 +115,102 @@ private:
 
 }  // namespace
 
-void RunStockfishUCI(std::istream& in, std::ostream& out) {
-    using namespace Stockfish;
-
-    // Redirect std::cin/std::cout for the duration of the UCI loop.
-    StreamRedirector redirect(in, out);
-    std::cout << engine_info() << std::endl;
-
-    // Mimic Stockfish's main() setup so evaluation tables and options are ready.
-    Attacks::init();
-    Position::init();
-
-    // Stockfish expects argc/argv through CommandLine; fake them.
-    std::vector<std::string> argvStorage = {"stockfish"};
-    std::vector<char*>       argv;
-    argv.reserve(argvStorage.size());
-    for (auto& arg : argvStorage)
-        argv.push_back(arg.data());
-
-    // Construct the UCI engine and initialize tuning/options. This mirrors the
-    // CommandLine handoff in the vendored Stockfish main.cpp.
-    auto cli = CommandLine(static_cast<int>(argv.size()), argv.data());
-    auto uci = std::make_unique<UCIEngine>(std::move(cli));
-    Tune::init(uci->engine_options());
-
-    // Blocking UCI loop; returns when "quit" is received or input closes.
-    uci->loop();
+std::string_view DefaultNetworkFileName() {
+    return EvalFileDefaultName;
 }
+
+class EmbeddedUCISession::Impl {
+   public:
+    explicit Impl(std::optional<std::string> networkFilePath) :
+        networkFilePath_(std::move(networkFilePath)) {}
+
+    void run(std::istream& in, std::ostream& out) {
+        if (!uci_ && !initialize(in, out))
+            return;
+
+        // Redirect only while Stockfish owns and services this command stream.
+        // The UCI engine itself remains alive after quit so a later run can
+        // reuse its already-loaded NNUE network.
+        StreamRedirector redirect(in, out);
+        uci_->loop();
+    }
+
+   private:
+    bool initialize(std::istream& in, std::ostream& out) {
+        using namespace Stockfish;
+
+#if defined(NNUE_EMBEDDING_OFF)
+        if (!networkFilePath_.has_value()) {
+            out << "info string StockfishEmbedded error: this build requires a caller-provided "
+                   "NNUE network file"
+                << std::endl;
+            return false;
+        }
+#endif
+
+        if (networkFilePath_.has_value()) {
+            const auto path = path_from_utf8(*networkFilePath_);
+            std::error_code fileError;
+            if (!std::filesystem::is_regular_file(path, fileError)) {
+                out << "info string StockfishEmbedded error: the configured NNUE network file "
+                       "is missing or unreadable"
+                    << std::endl;
+                return false;
+            }
+
+            // Stockfish's search path terminates the process when no compatible
+            // network is loaded. Preflight with the same parser so a bad caller-
+            // supplied file becomes an ordinary wrapper error instead.
+            auto                 network = std::make_unique<Eval::NNUE::Network>();
+            Eval::NNUE::EvalFile evalFile;
+            network->load_external({}, path, evalFile);
+            if (!evalFile.current.has_value()) {
+                out << "info string StockfishEmbedded error: the configured NNUE network is "
+                       "incompatible with this Stockfish build"
+                    << std::endl;
+                return false;
+            }
+        }
+
+        // Construction can write through Stockfish's process-wide output, so
+        // initialize under the same scoped redirect used by the UCI loop.
+        StreamRedirector redirect(in, out);
+        std::cout << engine_info() << std::endl;
+
+        // Mimic Stockfish's main() setup so evaluation tables and options are ready.
+        Attacks::init();
+        Position::init();
+
+        // Stockfish expects argc/argv through CommandLine; fake them.
+        std::vector<std::string> argvStorage = {"stockfish"};
+        std::vector<char*>       argv;
+        argv.reserve(argvStorage.size());
+        for (auto& arg : argvStorage)
+            argv.push_back(arg.data());
+
+        // Construct the UCI engine and initialize tuning/options. This mirrors the
+        // CommandLine handoff in the vendored Stockfish main.cpp.
+        auto cli = CommandLine(static_cast<int>(argv.size()), argv.data());
+        uci_     = std::make_unique<UCIEngine>(std::move(cli));
+
+        if (networkFilePath_.has_value()) {
+            std::istringstream evalFileOption("name EvalFile value " + *networkFilePath_);
+            uci_->engine_options().setoption(evalFileOption);
+        }
+
+        Tune::init(uci_->engine_options());
+        return true;
+    }
+
+    const std::optional<std::string> networkFilePath_;
+    std::unique_ptr<Stockfish::UCIEngine> uci_;
+};
+
+EmbeddedUCISession::EmbeddedUCISession(std::optional<std::string> networkFilePath) :
+    impl_(std::make_unique<Impl>(std::move(networkFilePath))) {}
+
+EmbeddedUCISession::~EmbeddedUCISession() = default;
+
+void EmbeddedUCISession::run(std::istream& in, std::ostream& out) { impl_->run(in, out); }
 
 }  // namespace SFEmbedded

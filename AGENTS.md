@@ -6,10 +6,11 @@ wrapped by a small Objective-C API (`SFEngine`) that is safe to call from Swift.
 ## Layout
 - `Package.swift` – SwiftPM source-library foundation for the `SFEngine`
   product.
-- `.spi.yml` – Swift Package Index build configurations for supported package
-  platforms.
+- `.spi.yml` – Swift Package Index build and DocC configurations for supported
+  package platforms.
 - `StockfishEmbedded.xcodeproj` – Xcode project and build targets.
 - `Sources/` – adapter layer, CLI smoke tests, and soak runner.
+- `Sources/SFEngine/SFEngine.docc/` – Swift package documentation landing page.
 - `IOSSwiftUI/` – SwiftUI smoke test app (iOS/iPadOS).
 - `ThirdParty/Stockfish/` – vendored Stockfish sources.
 - `Resources/NNUE/` – NNUE network files (download required).
@@ -206,6 +207,10 @@ xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineCLISoakTestSwift
 - Keep standardized GPL source headers on this repo's owned wrapper, smoke-test,
   and test sources. Do not rewrite or normalize headers inside
   `ThirdParty/Stockfish`; those files belong to upstream Stockfish.
+- The SwiftPM target spans the repository to compile vendored source. Keep its
+  private-header exclusions in `Package.swift` so DocC extracts only the
+  public Objective-C `SFEngine` API; validate symbol extraction and the DocC
+  catalog when changing the public header or source layout.
 
 ## License
 GPL-3.0. Using the static library in a distributed app generally requires the entire app

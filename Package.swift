@@ -1,6 +1,39 @@
 // swift-tools-version: 6.2
 
 import PackageDescription
+import Foundation
+
+let packageRoot = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+
+// The target spans this repository so it can compile the vendored Stockfish
+// sources. Keep private C++ headers out of SwiftPM's Objective-C API extraction
+// for DocC; the compiler can still include them from the source files.
+let privateHeaderPaths = ["Sources/SFEngine", "ThirdParty/Stockfish/src"]
+    .flatMap { directory -> [String] in
+        let path = packageRoot.appendingPathComponent(directory).path
+        guard let enumerator = FileManager.default.enumerator(atPath: path) else {
+            return []
+        }
+        return enumerator.allObjects.compactMap { $0 as? String }
+            .filter { path in
+                (path.hasSuffix(".h") || path.hasSuffix(".hh") || path.hasSuffix(".hpp"))
+                    && !(directory == "Sources/SFEngine" && path.hasPrefix("include/"))
+            }
+            .map { "\(directory)/\($0)" }
+    }
+    .sorted()
+
+let nonPackageDirectories = [
+    "IOSSwiftUI",
+    "Sources/CLIObjC",
+    "Sources/CLISoakSwift",
+    "Sources/CLISwift",
+    "Sources/SFEngineSoak",
+    "Tests",
+]
+let localBuildDirectory = packageRoot.appendingPathComponent("build").path
+let excludedGeneratedBuild = FileManager.default.fileExists(atPath: localBuildDirectory)
+    ? ["build"] : []
 
 let stockfishCoreSources = [
     "Sources/SFEngine/EmbeddedUCI.cpp",
@@ -48,6 +81,7 @@ let package = Package(
         .target(
             name: "SFEngine",
             path: ".",
+            exclude: nonPackageDirectories + privateHeaderPaths + excludedGeneratedBuild,
             sources: stockfishCoreSources,
             publicHeadersPath: "Sources/SFEngine/include",
             cxxSettings: [

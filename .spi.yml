@@ -5,3 +5,4 @@ builder:
       scheme: StockfishEmbedded
     - platform: macos-spm
       scheme: StockfishEmbedded
+      documentation_targets: [SFEngine]

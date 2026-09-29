@@ -1,5 +1,7 @@
 # StockfishEmbedded
 
+[![Swift versions](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FTrickfest%2FStockfishEmbedded%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/Trickfest/StockfishEmbedded) [![Supported platforms](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FTrickfest%2FStockfishEmbedded%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/Trickfest/StockfishEmbedded)
+
 StockfishEmbedded packages the Stockfish chess engine as an in-process library
 for iOS, iPadOS, and macOS. Its small Objective-C API, `SFEngine`, imports
 directly into Swift through Swift Package Manager.
@@ -7,6 +9,11 @@ directly into Swift through Swift Package Manager.
 This package is the engine bridge only. It does not provide chess rules, game
 state, board UI, or typed UCI parsing; those reusable pieces are available in
 [SwiftChessTools](https://github.com/Trickfest/SwiftChessTools).
+
+StockfishEmbedded is listed on the
+[Swift Package Index](https://swiftpackageindex.com/Trickfest/StockfishEmbedded).
+The badges above reflect SPI's build results and may show a pending state until
+its builders finish processing the package.
 
 ## Before you start
 
@@ -148,6 +155,8 @@ local URL to `SFEngine`; an end user does not perform a separate download.
   at runtime.
 - `StockfishEmbedded.xcodeproj` – Xcode project with static library targets (`SFEngine-iOS`, `SFEngine-macOS`), smoke tests (`SFEngineCLITestObjC`, `SFEngineCLITestSwift`, `SFEngineTestSwiftUI`), and soak components (`SFEngineSoak` runner + `SFEngineCLISoakTestSwift`).
 - `Sources/SFEngine` – adapter layer (ObjC++ wrapper and stream/queue helpers).
+- `Sources/SFEngine/SFEngine.docc` – DocC landing page and generated public API
+  reference for the Swift package.
 - `Sources/CLIObjC` – minimal macOS Objective-C CLI smoke test.
 - `Sources/CLISwift` – minimal macOS Swift CLI smoke test.
 - `Sources/SFEngineSoak` – shared soak test runner used by the CLI (and included in the SwiftUI target for future use).

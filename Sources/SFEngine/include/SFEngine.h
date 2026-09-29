@@ -31,13 +31,17 @@ typedef void (^NS_SWIFT_SENDABLE SFLineHandler)(NSString *line);
 @property(class, nonatomic, readonly, copy) NSString *defaultNetworkFileName;
 
 /// Creates an engine that discards UCI output. Prefer `initWithLineHandler:`
-/// when the caller needs engine responses.
+/// when the caller needs engine responses. SwiftPM builds require the external
+/// network initializer instead; without it, `start` cannot enter the UCI loop,
+/// and this initializer discards the diagnostic line.
 - (instancetype)init;
 
 /// Creates an engine with a line handler called for each output line.
 /// The handler is invoked in order on a wrapper-owned serial background queue;
 /// dispatch to the main queue if you need to update UI. It is safe to call
-/// `stop` from the handler.
+/// `stop` from the handler. SwiftPM builds require the external network
+/// initializer instead; calling `start` on this instance reports an
+/// `info string StockfishEmbedded error` line.
 - (instancetype)initWithLineHandler:(SFLineHandler)handler NS_DESIGNATED_INITIALIZER;
 
 /// Creates an engine that loads its NNUE network from a caller-provided local
@@ -50,7 +54,10 @@ typedef void (^NS_SWIFT_SENDABLE SFLineHandler)(NSString *line);
 - (instancetype)initWithNetworkFileURL:(NSURL *)networkFileURL
                            lineHandler:(SFLineHandler)handler NS_DESIGNATED_INITIALIZER;
 
-/// Starts the engine loop on a background thread.
+/// Starts the engine loop on a background thread. This does not send `uci` or
+/// `isready`; send those commands and wait for `uciok` and `readyok` before
+/// searching. Startup failures are reported to the line handler as an
+/// `info string StockfishEmbedded error` line.
 - (void)start;
 
 /// Temporarily exits the UCI loop and releases process-wide stream ownership
@@ -68,12 +75,14 @@ typedef void (^NS_SWIFT_SENDABLE SFLineHandler)(NSString *line);
 /// Safe to call from any thread while the engine is running.
 /// Empty commands are ignored. Multiline, NUL-containing, oversized, and
 /// unsupported debug-log commands are rejected and reported to the line
-/// handler as an `info string` error.
+/// handler as an `info string` error. Commands sent while the engine is not
+/// running are ignored.
 - (void)sendCommand:(NSString *)command;
 
 /// Sends "stop" then "quit" and tears down the engine thread.
 /// This discards any state preserved by `suspend` and is a terminal transition,
-/// even when called before `start`.
+/// even when called before `start`. This call waits for the engine thread to
+/// finish; create a new instance for another session.
 - (void)stop;
 
 @end

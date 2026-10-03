@@ -8,6 +8,9 @@ wrapped by a small Objective-C API (`SFEngine`) that is safe to call from Swift.
   product.
 - `.spi.yml` – Swift Package Index build and DocC configurations for supported
   package platforms.
+- The shared `StockfishEmbedded` Xcode scheme builds the local Swift package
+  product for SPI's iOS checks without an NNUE asset. Legacy `SFEngine-iOS`
+  and `SFEngine-macOS` targets retain their embedded-network behavior.
 - `StockfishEmbedded.xcodeproj` – Xcode project and build targets.
 - `Sources/` – adapter layer, CLI smoke tests, and soak runner.
 - `Sources/SFEngine/SFEngine.docc/` – Swift package documentation landing page.

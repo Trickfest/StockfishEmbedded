@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Added a shared `StockfishEmbedded` Xcode scheme for SPI's iOS build. It
+  builds the local Swift package product without requiring the ignored NNUE
+  asset, while leaving legacy embedded-network targets unchanged.
+
 ## [1.12.0] - 2026-09-29
 
 ### Added

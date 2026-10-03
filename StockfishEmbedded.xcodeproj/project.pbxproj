@@ -583,6 +583,7 @@
 			);
 			mainGroup = A1F000000000000000000002;
 			packageReferences = (
+				AA0000000000000000000001 /* XCLocalSwiftPackageReference "." */,
 				F09AE2666C2E4DD788F4AA44 /* XCRemoteSwiftPackageReference "swift-argument-parser" */,
 			);
 			productRefGroup = A1F000000000000000000003 /* Products */;
@@ -599,6 +600,13 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		AA0000000000000000000001 /* XCLocalSwiftPackageReference "." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = .;
+		};
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin PBXSourcesBuildPhase section */
 		549FC414D071C7832B09C0C2 /* Sources */ = {

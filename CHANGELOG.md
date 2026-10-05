@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.12.1] - 2026-10-05
+
+### Added
+
+- Added Swift Package Index badges and a DocC landing page with public API
+  documentation, including external NNUE setup and engine lifecycle guidance.
+
 ### Fixed
 
 - Added a shared `StockfishEmbedded` Xcode scheme for SPI's iOS build. It

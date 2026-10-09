@@ -55,20 +55,30 @@ private final class PackageLineSink: @unchecked Sendable {
     }
 }
 
-private let localNetworkURL: URL? = {
+private func localNetwork(named filename: String) -> URL? {
     let repositoryRoot = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent()
         .deletingLastPathComponent()
         .deletingLastPathComponent()
     let networkURL = repositoryRoot
         .appendingPathComponent("Resources/NNUE", isDirectory: true)
-        .appendingPathComponent(SFEngine.defaultNetworkFileName)
+        .appendingPathComponent(filename)
 
     return FileManager.default.fileExists(atPath: networkURL.path) ? networkURL : nil
-}()
+}
+
+private let localNetworkURL = localNetwork(named: SFEngine.defaultNetworkFileName)
+// A real network from the prior PSQT layout is a stronger migration check than
+// arbitrary corrupt bytes. This remains optional in clean source-only builds.
+private let previousNetworkURL = localNetwork(named: "nn-134a887f4c8f.nnue")
 
 @Suite(.serialized)
 struct SFEnginePackageRuntimeTests {
+    @Test
+    func defaultNetworkMatchesVendoredSnapshot() {
+        #expect(SFEngine.defaultNetworkFileName == "nn-252f33942263.nnue")
+    }
+
     @Test
     func packageBuildRequiresExternalNetworkConfiguration() {
         let sink = PackageLineSink()
@@ -107,6 +117,24 @@ struct SFEnginePackageRuntimeTests {
 
     @Test(
         .enabled(
+            if: previousNetworkURL != nil,
+            "The previous-layout network is an optional local migration fixture"
+        )
+    )
+    func previousNetworkLayoutIsRejectedWithoutTerminatingTheProcess() throws {
+        let networkURL = try #require(previousNetworkURL)
+        let sink = PackageLineSink()
+        let engine = SFEngine(networkFileURL: networkURL) { sink.append($0) }
+        defer { engine.stop() }
+
+        engine.start()
+        #expect(sink.wait(timeout: 10.0) {
+            $0.contains("incompatible with this Stockfish build")
+        } != nil)
+    }
+
+    @Test(
+        .enabled(
             if: localNetworkURL != nil,
             "Run Scripts/download-nnue.sh to exercise the external-network search"
         )
@@ -123,14 +151,14 @@ struct SFEnginePackageRuntimeTests {
         engine.sendCommand("setoption name EvalFile value /tmp/unvalidated.nnue")
         engine.sendCommand("isready")
         engine.sendCommand("position startpos moves e2e4")
-        engine.sendCommand("go depth 1")
+        engine.sendCommand("go depth 8")
 
         let evalFileRejected = sink.wait(timeout: 2.0) {
             $0.contains("EvalFile must be configured with initWithNetworkFileURL:lineHandler:")
         }
         let bestmove = sink.wait(timeout: 20.0) { $0.hasPrefix("bestmove ") }
         let networkLoaded = sink.wait(timeout: 2.0) {
-            $0.contains("NNUE evaluation using")
+            $0.contains("NNUE evaluation using") && $0.contains(SFEngine.defaultNetworkFileName)
         }
         engine.stop()
 
@@ -156,7 +184,7 @@ struct SFEnginePackageRuntimeTests {
         #expect(sink.wait(timeout: 10.0) { $0 == "readyok" } != nil)
 
         engine.sendCommand("position startpos")
-        engine.sendCommand("go depth 1")
+        engine.sendCommand("go depth 8")
         #expect(sink.wait(timeout: 10.0) { $0.hasPrefix("bestmove ") } != nil)
 
         engine.suspend()
@@ -168,7 +196,7 @@ struct SFEnginePackageRuntimeTests {
 
         engine.sendCommand("ucinewgame")
         engine.sendCommand("position startpos moves e2e4")
-        engine.sendCommand("go depth 1")
+        engine.sendCommand("go depth 8")
         #expect(sink.wait(timeout: 5.0) { $0.hasPrefix("bestmove ") } != nil)
         engine.stop()
     }

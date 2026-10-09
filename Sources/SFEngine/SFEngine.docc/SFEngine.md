@@ -17,6 +17,11 @@ from Stockfish's official server, verify it, and either bundle it with your
 app or keep it in app-owned storage. The [README quick start](https://github.com/Trickfest/StockfishEmbedded#quick-start-with-swift-package-manager)
 provides the current download URL, checksum, and Xcode setup steps.
 
+When upgrading the package, check `SFEngine.defaultNetworkFileName` again and
+replace the app's network if it changed. Networks from a different Stockfish
+layout are not interchangeable; the wrapper rejects an incompatible file
+before entering the UCI loop.
+
 Then pass the local file URL to `SFEngine`:
 
 ```swift

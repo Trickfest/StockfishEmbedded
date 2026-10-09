@@ -75,6 +75,11 @@ committed manually instead of through `git subtree pull`.
 git subtree pull --prefix ThirdParty/Stockfish stockfish master --squash
 ```
 
+This command creates commits. When the user requires an uncommitted validation
+candidate, export the pinned upstream tree and copy it into `ThirdParty/Stockfish`
+instead. Record the SHA in the README and eventual update commit, and verify
+the exact vendored tree against that upstream revision before publication.
+
 4. Audit the embedded UCI shim against upstream `main.cpp`:
 ```
 git show stockfish/master:src/main.cpp
@@ -89,12 +94,15 @@ entry point. This shim intentionally mimics Stockfish `main()` before calling
 ```
 rg -n 'EvalFileDefaultName|nn-[a-f0-9]+\.nnue' ThirdParty/Stockfish/src
 ```
-The current vendored snapshot requires `nn-134a887f4c8f.nnue`.
-Download any new required nets into `Resources/NNUE/` and update this file,
+The current vendored snapshot is `49ea5ded38315cff8e67f4a677a9e7811612fbf6`
+and requires `nn-252f33942263.nnue`.
+Download any new required nets into `Resources/NNUE/`,
 delete obsolete local `.nnue` files that are no longer referenced by the
 current Stockfish snapshot, and update this file, `README.md`, and
 `Resources/NNUE/README.md` if the filenames changed. NNUE files are ignored
 local assets and should not be committed.
+Delay removal of an old local network while a sibling consumer still references
+it; update that consumer first during the integration/release pass.
 
 6. Refresh versioning documentation for the new snapshot:
 ```
@@ -103,7 +111,8 @@ rg -n '<old-subtree-split>|sf_[0-9]|Stockfish [0-9]|snapshot|Current vendored up
 ```
 Replace `<old-subtree-split>` with the split recorded before the subtree pull.
 Update `README.md`'s "Stockfish versioning" section so `Current vendored
-upstream commit` matches the new `git-subtree-split` line. Also check nearby
+upstream commit` matches the pinned upstream SHA (or new `git-subtree-split`
+line when using a subtree pull). Also check nearby
 versioning examples and release/snapshot wording so they do not keep pointing
 at the previous pre-update snapshot or an obsolete release tag. Historical
 `CHANGELOG.md` entries should keep the SHAs from their original releases; update

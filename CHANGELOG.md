@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.13.0] - 2026-10-09
+
+### Changed
+
+- Refresh vendored Stockfish to `49ea5ded38315cff8e67f4a677a9e7811612fbf6`,
+  seven upstream commits after the previous snapshot, including search tuning,
+  capture handling improvements, and removal of the NNUE PSQT accumulator.
+- Require the matching `nn-252f33942263.nnue` network. Update app-bundled or
+  app-managed copies when upgrading; the previous network layout is incompatible.
+  Network files remain ignored local assets, not Swift package resources.
+- Audit the embedded initialization and external-network preflight against
+  upstream: the entry sequence and loader API are unchanged, so no native shim
+  changes are needed.
+
+### Added
+
+- Expand package validation to exercise depth-8 searches and rejection of the
+  previous network when available, alongside suspend/resume coverage.
+- Validate optimized package builds/tests and clean, network-free SPI Xcode
+  schemes for macOS and iOS, plus the legacy iOS Release library.
+
 ## [1.12.1] - 2026-10-05
 
 ### Added

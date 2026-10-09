@@ -28,6 +28,8 @@ done
 swift package dump-package >/dev/null
 swift build
 swift test
+swift build -c release
+swift test -c release
 
 SIMULATOR_SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"
 swift build \
@@ -54,6 +56,20 @@ rsync -a \
   swift build
   swift test
 )
+
+# Exercise the exact source-only shared scheme SPI uses, without relying on
+# an ignored local NNUE file or the legacy embedded-network library targets.
+for destination in 'platform=macOS,arch=arm64' 'generic/platform=iOS'; do
+  xcodebuild \
+    -project "$CLEAN_PACKAGE_ROOT/StockfishEmbedded.xcodeproj" \
+    -scheme StockfishEmbedded \
+    -configuration Release \
+    -destination "$destination" \
+    -derivedDataPath "$CLEAN_PACKAGE_ROOT/.build/xcode-spi" \
+    ARCHS=arm64 \
+    CODE_SIGNING_ALLOWED=NO \
+    build
+done
 
 xcodebuild \
   -project StockfishEmbedded.xcodeproj \
@@ -103,6 +119,15 @@ xcodebuild \
   -scheme SFEngineTestSwiftUI \
   -configuration Debug \
   -destination 'generic/platform=iOS Simulator' \
+  -derivedDataPath build \
+  CODE_SIGNING_ALLOWED=NO \
+  build
+
+xcodebuild \
+  -project StockfishEmbedded.xcodeproj \
+  -scheme SFEngine-iOS \
+  -configuration Release \
+  -destination 'generic/platform=iOS' \
   -derivedDataPath build \
   CODE_SIGNING_ALLOWED=NO \
   build

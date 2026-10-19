@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Documentation
+
+- Align README and DocC organization with ArasanEmbedded, make readiness-gated
+  search examples explicit, and add focused architecture, examples, testing,
+  troubleshooting, provenance, and upstream-update guides. Public APIs and
+  production/test behavior are unchanged.
+
 ## [1.13.0] - 2026-10-09
 
 ### Changed

@@ -2,49 +2,42 @@
 
 [![Swift versions](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FTrickfest%2FStockfishEmbedded%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/Trickfest/StockfishEmbedded) [![Supported platforms](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FTrickfest%2FStockfishEmbedded%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/Trickfest/StockfishEmbedded)
 
-StockfishEmbedded packages the Stockfish chess engine as an in-process library
-for iOS, iPadOS, and macOS. Its small Objective-C API, `SFEngine`, imports
-directly into Swift through Swift Package Manager.
+StockfishEmbedded runs the Stockfish chess engine in-process from an iOS,
+iPadOS, or macOS app. Its small Objective-C API imports into Swift as
+`SFEngine`.
 
-This package is the engine bridge only. It does not provide chess rules, game
-state, board UI, or typed UCI parsing; those reusable pieces are available in
-[SwiftChessTools](https://github.com/Trickfest/SwiftChessTools).
-
-StockfishEmbedded is listed on the
-[Swift Package Index](https://swiftpackageindex.com/Trickfest/StockfishEmbedded).
-The badges above reflect SPI's build results and may show a pending state until
-its builders finish processing the package.
+This package is the engine bridge, not a chess rules library, board UI, or UCI
+parser. Use [SwiftChessTools](https://github.com/Trickfest/SwiftChessTools) for
+those pieces. [SwiftChessDemo](https://github.com/Trickfest/SwiftChessDemo)
+shows both embedded engines working in one app.
 
 ## Before you start
 
-- **License:** Stockfish and StockfishEmbedded are GPL-3.0. Distributing an app
-  linked with this package generally requires the whole combined app to comply
-  with GPLv3 and provide corresponding source. Review `LICENSE` before adopting
-  it for a distributed app.
-- **Platforms:** The current package supports Apple arm64 on iOS/iPadOS 26 and
-  macOS 26. Intel Macs and x86_64 simulators are unsupported.
-- **Runtime asset:** Stockfish needs a separate NNUE network file to search a
-  position. The package compiles without that file, but an engine cannot play
-  or analyze until your app supplies a valid local file URL.
+- **License:** This package and Stockfish are GPL-3.0. Review
+  [Licensing](#licensing) before distributing an app that links the engine.
+- **Requirements:** Swift 6.2 or newer and Xcode 26 or newer, targeting
+  iOS/iPadOS 26 or macOS 26 and later. Apple arm64 is supported; Intel Macs and
+  x86_64 simulators are not.
+- **Network:** The package builds without a network file, but searches require
+  a matching NNUE file supplied by your app. There is no automatic download
+  during package resolution, building, or engine startup.
 
-## Quick start with Swift Package Manager
+The badges link to the Swift Package Index's compatibility results. They are
+separate from this repository's local validation instructions.
 
-### 1. Add the package
+## Installation
 
-In Xcode, choose **File > Add Package Dependencies**, enter:
+In Xcode, choose **File > Add Package Dependencies**, enter
+`https://github.com/Trickfest/StockfishEmbedded.git`, and add the `SFEngine`
+product to your app target.
 
-```text
-https://github.com/Trickfest/StockfishEmbedded.git
-```
-
-Select the latest release and add the `SFEngine` product to your app target.
-For a manifest-based package, use:
+For a manifest-based client, add these entries to its existing manifest:
 
 ```swift
 dependencies: [
     .package(
         url: "https://github.com/Trickfest/StockfishEmbedded.git",
-        from: "1.12.0"
+        from: "1.13.0"
     ),
 ],
 targets: [
@@ -57,15 +50,26 @@ targets: [
 ]
 ```
 
-### 2. Download the NNUE network
+This example selects the source generation described below. When choosing
+another version, use that version's network filename and setup instructions.
 
-NNUE stands for *Efficiently Updatable Neural Network*. It is the roughly
-99 MB (94 MiB) data file Stockfish uses to evaluate chess positions; it is not source
-code or another executable. The file is intentionally excluded from this Git
-repository and Swift package so normal package resolution stays source-only.
+## Quick start with Swift Package Manager
 
-The vendored Stockfish snapshot expects `nn-252f33942263.nnue`. Download it
-from Stockfish's official test server:
+### Prepare the network
+
+NNUE stands for *Efficiently Updatable Neural Network*. It is the data
+Stockfish uses to evaluate chess positions, not another executable. This
+snapshot requires `nn-252f33942263.nnue`, 98,668,604 bytes: roughly 99 MB (94 MiB).
+
+From a repository clone, run:
+
+```sh
+Scripts/download-nnue.sh
+```
+
+The helper verifies and reuses a matching local file in `Resources/NNUE`.
+For an app that only resolves the package through Xcode, download the file
+directly:
 
 ```sh
 curl --proto '=https' --tlsv1.2 --location --fail --show-error \
@@ -74,32 +78,21 @@ curl --proto '=https' --tlsv1.2 --location --fail --show-error \
 shasum -a 256 nn-252f33942263.nnue
 ```
 
-The expected SHA-256 value is:
+Compare the result with the expected SHA-256:
 
 ```text
 252f33942263bc8b8f740ba8aec3fed5a159ff148113c47a55c18c33d6627ab3
 ```
 
-If you cloned this repository, `Scripts/download-nnue.sh` performs the download
-and verifies the hash prefix encoded in Stockfish's filename before placing the
-file in `Resources/NNUE`.
+Drag the verified file into your app project, enable the app target's
+membership, and confirm **Build Phases > Copy Bundle Resources** includes it.
+Keep its filename unchanged. See [network setup](Resources/NNUE/README.md)
+for app-managed storage and upgrade details.
 
-When upgrading from an earlier package release, replace your app's network
-with this matching file too. The current Stockfish snapshot uses a revised
-NNUE layout; the previous network is incompatible and is rejected by the
-wrapper before searching.
+### Run one search
 
-### 3. Put the network in your app
-
-For the simplest setup, drag `nn-252f33942263.nnue` into your app project,
-enable your app target's target membership, and confirm that it appears under
-**Build Phases > Copy Bundle Resources**. Keep the filename unchanged.
-
-Bundling is not mandatory. An app may instead download the network into its own
-Application Support or cache directory, provided it verifies the file and keeps
-it accessible and unchanged for the lifetime of the engine.
-
-### 4. Create and start the engine
+This example buffers output, waits for readiness, then stops after one
+`bestmove`. The detached task keeps blocking shutdown off the UI actor.
 
 ```swift
 import Foundation
@@ -112,312 +105,122 @@ guard let networkURL = Bundle.main.url(
     fatalError("Missing \(SFEngine.defaultNetworkFileName) in the app bundle")
 }
 
-let engine = SFEngine(networkFileURL: networkURL) { line in
-    print(line)
+let searchTask = Task.detached {
+    let (lines, output) = AsyncStream<String>.makeStream()
+    let engine = SFEngine(networkFileURL: networkURL) { line in
+        output.yield(line)
+    }
+    defer {
+        engine.stop()
+        output.finish()
+    }
+
+    engine.start()
+    engine.sendCommand("uci")
+
+    for await line in lines {
+        print(line)
+        if line.hasPrefix("info string StockfishEmbedded error")
+            || line.hasPrefix("bestmove ") {
+            break
+        }
+        if line == "uciok" {
+            engine.sendCommand("isready")
+        } else if line == "readyok" {
+            engine.sendCommand("position startpos")
+            engine.sendCommand("go depth 8")
+        }
+    }
 }
-
-engine.start()
-engine.sendCommand("uci")
-engine.sendCommand("isready")
-engine.sendCommand("position startpos")
-engine.sendCommand("go depth 8")
 ```
 
-Keep a strong reference to `engine` while it is running and call `engine.stop()`
-when finished. The callback arrives on a wrapper-owned serial background queue;
-dispatch to the main actor before updating UI. A production UCI client should
-wait for `uciok` and `readyok` before starting searches; SwiftChessDemo shows
-that complete lifecycle.
+Keep `searchTask` so you can cancel it when leaving the screen. In an async
+command-line client, await `searchTask.value` to keep the process alive.
+This one-search example has no startup deadline; a production session also
+needs timeouts and error handling. See [Examples](Docs/Examples.md) and
+SwiftChessDemo's engine providers for a fuller lifecycle.
 
-Apps that alternate Stockfish with another in-process engine may call
-`suspend()` after receiving `bestmove`, let the other engine run, and then call
-`resume()` before repeating the UCI handshake. Suspension releases the
-process-wide C++ stream redirect but preserves the Stockfish instance and its
-already parsed NNUE network. `stop()` remains the terminal operation.
+## Runtime assets
 
-If the network is missing, unreadable, or incompatible, the callback receives
-an `info string StockfishEmbedded error` line and the host app keeps running.
-The wrapper validates the network with Stockfish's own loader before entering
-the UCI loop.
+The app owns the network's local file URL and must keep that file accessible
+and unchanged until the engine stops. It may bundle the verified file or store
+it in an app-owned Application Support or cache directory. If using a cache,
+ensure the file remains available throughout the engine session. The path must
+be representable as one safe UCI option line. Package startup checks
+compatibility using Stockfish's own loader before
+entering the UCI loop; a missing or incompatible file reports an
+`info string StockfishEmbedded error` line without terminating the host app.
 
-## Reference App
+When upgrading, check `SFEngine.defaultNetworkFileName` again. Network layouts
+can change; the previous `nn-134a887f4c8f.nnue` is incompatible with this
+snapshot. The older Xcode static-library targets instead embed the ignored
+local network at build time; see [legacy integration](PROJECT_INTEGRATION.md).
 
-For a realistic iOS app that uses this engine wrapper, see
-[SwiftChessDemo](https://github.com/Trickfest/SwiftChessDemo). The demo combines
-`StockfishEmbedded`,
-[ArasanEmbedded](https://github.com/Trickfest/ArasanEmbedded), and
-[SwiftChessTools](https://github.com/Trickfest/SwiftChessTools) to show a
-playable SwiftUI chess app with app-owned game state, legal move validation,
-serialized Stockfish searches, UCI parsing, evaluation display, move
-suggestions, move history, and engine status feedback.
+## Lifecycle and threading
 
-The demo bundles a verified NNUE network with the built app and supplies its
-local URL to `SFEngine`; an end user does not perform a separate download.
+- `start()` launches the UCI loop. The caller sends `uci` and `isready` and
+  waits for their replies before searching; returning from `start()` is not
+  a readiness signal.
+- Output arrives in order on a serial background queue. Dispatch UI updates
+  to the main actor, and keep handlers brief.
+- `sendCommand(_:)` accepts one trusted UCI line. Generate it from validated
+  app state; do not pass arbitrary user text through to native code.
+- `sendCommand("stop")` requests the current search's terminal `bestmove`.
+  `engine.stop()` instead shuts down the wrapper and is terminal for that
+  instance, even before its first start. Create a new instance afterward.
+- `suspend()` may be used after `bestmove` to release the C++ stream redirect
+  while retaining the loaded engine/network. Resume the same instance and
+  repeat the handshake. A suspended instance retains its SFEngine ownership
+  lease; do not create a second SFEngine instead.
+- Shutdown blocks through native teardown. Call it off the UI actor. Calling
+  it from the output handler is supported.
 
-## Layout
-- `Package.swift` – SwiftPM source-library foundation for the `SFEngine`
-  product. It compiles without an NNUE file and loads a caller-provided network
-  at runtime.
-- `StockfishEmbedded.xcodeproj` – Xcode project with static library targets (`SFEngine-iOS`, `SFEngine-macOS`), smoke tests (`SFEngineCLITestObjC`, `SFEngineCLITestSwift`, `SFEngineTestSwiftUI`), and soak components (`SFEngineSoak` runner + `SFEngineCLISoakTestSwift`).
-- `Sources/SFEngine` – adapter layer (ObjC++ wrapper and stream/queue helpers).
-- `Sources/SFEngine/SFEngine.docc` – DocC landing page and generated public API
-  reference for the Swift package.
-- `Sources/CLIObjC` – minimal macOS Objective-C CLI smoke test.
-- `Sources/CLISwift` – minimal macOS Swift CLI smoke test.
-- `Sources/SFEngineSoak` – shared soak test runner used by the CLI (and included in the SwiftUI target for future use).
-- `Sources/CLISoakSwift` – macOS Swift CLI soak test.
-- `Tests/SFEngineTests` – XCTest harness with contract, perft, tactical, and score-band assertions.
-- `IOSSwiftUI` – iOS/iPadOS SwiftUI smoke test app (iOS 26+).
-- `ThirdParty/Stockfish` – vendored Stockfish source (snapshot tracked via git subtree).
-- `Resources/NNUE` – NNUE networks referenced by the build (net files not tracked in repo - see below).
-- `Resources/Soak` – default FEN position files for soak tests.
+Both embedded engines use process-wide C++ streams. Their native ownership
+guards are not a cross-package scheduler: your app must serialize Stockfish
+and Arasan sessions. See [Architecture](Docs/Architecture.md) for the stream
+boundary, command restrictions, search limits, and repository layout.
 
-## SwiftPM and NNUE behavior
+## Reference app
 
-A clean clone can validate, compile, and run the non-search package tests
-without downloading an NNUE file:
+[SwiftChessDemo](https://github.com/Trickfest/SwiftChessDemo) combines
+StockfishEmbedded, [ArasanEmbedded](https://github.com/Trickfest/ArasanEmbedded),
+and SwiftChessTools for human-versus-engine and engine-versus-engine play,
+evaluation display, suggestions, and move history.
 
-```
-swift package dump-package
-swift build
-swift test
-```
+The app owns game state and legal move validation, serializes native engine
+searches, parses UCI output, and displays engine status feedback.
 
-The SwiftPM target defines `NNUE_EMBEDDING_OFF`, so the consuming app—not the
-package build—owns the network. `networkFileURL` must be a local file URL with a
-path representable by the UCI option grammar. The package never performs a
-network request, and `SFEngine.defaultNetworkFileName` reports the exact file
-expected by the vendored Stockfish snapshot.
+The built app already includes its verified Stockfish network; end users do
+not download a model separately. Use the demo as the shared end-to-end example
+rather than creating a second integration app.
 
-The default initializer remains available for the existing Xcode targets,
-which embed the locally downloaded network. SwiftPM builds reject `start`
-without the external-network initializer and reject attempts to replace the
-validated path through the raw `EvalFile` UCI option.
+## Testing and troubleshooting
 
-When the ignored local network is present under `Resources/NNUE`, `swift test`
-also performs an end-to-end external-network search. A clean clone skips only
-that asset-dependent search while continuing to compile and test the API's
-missing- and invalid-network behavior.
+From a clone on an Apple-silicon Mac, run `Scripts/validate.sh` for the full
+local gate. It downloads/verifies the network when needed. A plain
+`swift build` or `swift test` does not download anything and can run without it,
+with explicit skips for tests that require local network fixtures.
 
-SwiftPM currently targets Apple arm64 only. The explicit NEON configuration is
-intentional; Intel macOS and x86_64 simulator builds are unsupported.
+[Testing](Docs/Testing.md) distinguishes SwiftPM tests, legacy Xcode tests,
+CLI smokes/soaks, build-only checks, and manual app checks.
+[Troubleshooting](Docs/Troubleshooting.md) covers network failures, readiness,
+engine switching, and unsupported targets. GitHub-hosted validation is
+deferred; local validation remains the required evidence.
 
-## Existing Xcode-project integration
+## Maintenance and provenance
 
-The repository also retains its original static-library Xcode targets. Those
-targets embed the locally downloaded NNUE at build time, so run this from a
-repository clone before building them:
+- [Architecture](Docs/Architecture.md): wrapper design and source layout.
+- [Examples](Docs/Examples.md): search and shutdown patterns.
+- [Provenance](Docs/Provenance.md): source and network identity.
+- [Updating Stockfish](Docs/UpdatingStockfish.md): maintainer update procedure.
+- [Changelog](CHANGELOG.md): package change history.
 
-```
-Scripts/download-nnue.sh
-```
+Current vendored upstream commit: `49ea5ded38315cff8e67f4a677a9e7811612fbf6`.
+Upstream sources remain unmodified; wrapper code lives outside
+`ThirdParty/Stockfish`. The DocC catalog at
+`Sources/SFEngine/SFEngine.docc` documents the public SwiftPM API.
 
-Re-running the script is safe; it verifies and reuses a valid existing file.
-Pass `--force` to download a fresh copy. See
-[`PROJECT_INTEGRATION.md`](PROJECT_INTEGRATION.md) only if you specifically need
-the older Xcode subproject/static-library integration instead of SwiftPM.
-
-## Building
-### Xcode
-1. Open `StockfishEmbedded.xcodeproj`.
-2. Build `SFEngine-iOS` for device or simulator, or `SFEngine-macOS` for macOS to produce `libSFEngine-*.a`.
-3. Build/run `SFEngineCLITestObjC` or `SFEngineCLITestSwift` (macOS) to run the minimal UCI smoke tests.
-4. Build/run `SFEngineTestSwiftUI` (iOS/iPadOS) for the SwiftUI smoke test app.
-
-Note: Running `SFEngineTestSwiftUI` on a device requires selecting a Development
-Team in Xcode (Signing & Capabilities). For command-line build-only checks,
-disable code signing as shown below.
-
-### Command line
-```
-# macOS static lib (Debug)
-xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngine-macOS -configuration Debug -destination 'platform=macOS,arch=arm64' -derivedDataPath build
-
-# iOS static lib (Release)
-xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngine-iOS -configuration Release -destination 'generic/platform=iOS' -derivedDataPath build
-
-# macOS CLI smoke test (ObjC)
-xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineCLITestObjC -configuration Debug -destination 'platform=macOS,arch=arm64' -derivedDataPath build
-./build/Build/Products/Debug/SFEngineCLITestObjC
-
-# macOS CLI smoke test (Swift)
-xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineCLITestSwift -configuration Debug -destination 'platform=macOS,arch=arm64' -derivedDataPath build
-./build/Build/Products/Debug/SFEngineCLITestSwift
-
-# macOS CLI soak test (Swift, short run)
-xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineCLISoakTestSwift -configuration Debug -destination 'platform=macOS,arch=arm64' -derivedDataPath build
-./build/Build/Products/Debug/SFEngineCLISoakTestSwift --iterations 5 --movetime 500
-
-# macOS XCTest harness
-xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineTests -configuration Debug -destination 'platform=macOS,arch=arm64' -derivedDataPath build test
-
-# iOS/iPadOS SwiftUI smoke test (unsigned build only)
-xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineTestSwiftUI -configuration Debug -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
-```
-
-Tip: If you see stale-file warnings after switching build output locations, delete `build/` or clean DerivedData.
-
-Run the complete local gate (Debug/Release package tests, clean network-free
-SwiftPM and SPI Xcode builds, macOS library, both CLI smokes, short soak,
-XCTest, iOS Simulator app, and iOS Release library) with:
-
-```
-Scripts/validate.sh
-```
-
-GitHub-hosted validation is intentionally deferred. This repository has no
-active root GitHub Actions workflow; run the gate above on a local Apple-silicon
-Mac instead. A future manually dispatched workflow may download and verify the
-required NNUE network before testing, but neither a hosted run nor hosted
-success is currently a completion or release requirement. Workflows retained
-inside `ThirdParty/Stockfish` belong to the vendored upstream snapshot and are
-not active for this wrapper repository.
-
-## CLI soak tests
-The CLI soak test (`SFEngineCLISoakTestSwift`) runs repeated searches against a FEN corpus. By default it loads
-`Resources/Soak/positions.txt` and loops forever until you stop it.
-
-Build and run (macOS 26+):
-```
-xcodebuild -project StockfishEmbedded.xcodeproj -scheme SFEngineCLISoakTestSwift -configuration Debug -destination 'platform=macOS,arch=arm64' -derivedDataPath build
-./build/Build/Products/Debug/SFEngineCLISoakTestSwift --iterations 100 --depth 10
-```
-
-Key options:
-- `--iterations N` – cap the run (otherwise it repeats forever).
-- `--depth N`, `--nodes N`, or `--movetime MS` – choose one search limit.
-- `--timeout S` – per-move timeout (default 30s).
-- `--delay-ms MS` – pause between iterations.
-- `--log-output` – print all engine output lines.
-- `--ready-each` – send `isready` before each iteration.
-- `--chess960` plus `--chess960-positions PATH` – include Chess960 positions.
-
-When a move timeout occurs, the runner sends `stop` and waits for that search's
-terminal `bestmove` before advancing. If the engine does not produce one within
-`--stop-timeout`, the run ends instead of risking attribution of a late move to
-the next position.
-
-Position files contain one four/six-field FEN per line; `startpos` and a FEN
-suffix of `moves <uci-move> ...` are also accepted. Obvious syntax errors are
-rejected before native engine startup. Relative paths are resolved against the
-current working directory and the repo root.
-
-## Design approach
-This repo embeds Stockfish as an in-process static library with a minimal shim and keeps upstream
-Stockfish sources unmodified. The goal is a small, maintainable adaptation layer that is easy to update when
-Stockfish changes.
-
-Highlights:
-- Upstream Stockfish sources are untouched; the wrapper lives in `Sources/SFEngine`.
-- Stockfish is vendored via git subtree; updates are explicit and squashed to keep history small.
-- Existing Xcode targets embed the downloaded NNUE network for out-of-the-box
-  `go` searches; SwiftPM clients supply a validated local network URL at runtime.
-- Release engine libraries use `-O3` and `NDEBUG`, matching Stockfish's normal
-  optimized, non-debug build policy; Debug libraries retain assertions.
-- Stream redirection is scoped to the shim instead of global source edits.
-- The API surface is small and Swift-friendly (thread-safe command queue + ordered serial line callback).
-- Xcode targets include macOS CLI smoke tests and an iOS/iPadOS SwiftUI smoke app.
-
-## Adapter details
-- `SFEngine` spins the engine on a dedicated worker thread, swapping process-wide
-  `std::cin/std::cout` to custom stream buffers that talk to a thread-safe queue.
-- Output callbacks are delivered in order on a wrapper-owned serial background
-  queue, away from Stockfish search workers. Swift imports the handler as
-  `@Sendable`; calling `stop` from a callback is safe.
-- `stop` enqueues `stop` + `quit`, closes the queue (to guarantee EOF), joins the
-  engine thread, and drains already-enqueued callbacks when called off the
-  callback queue. When a handler itself calls `stop`, later queued callbacks are
-  suppressed so no additional handler invocation begins after `stop` returns.
-- `suspend` exits and joins the current UCI-loop thread without destroying the
-  underlying Stockfish engine. `resume` starts a fresh loop thread around the
-  same engine, avoiding another NNUE parse while keeping stream redirection
-  limited to the interval in which Stockfish is active.
-- Stockfish sources are unmodified; the tiny `EmbeddedUCI` shim calls the upstream UCI loop after redirecting streams and performing the normal initialization from `main.cpp`.
-
-## Threading and search control
-`SFEngine` is an in-process wrapper, not a separate engine process. Starting an
-engine instance creates one wrapper-owned C++ thread that runs Stockfish's UCI
-loop. Swift, SwiftUI, and app main-thread code should send commands through
-`sendCommand(_:)`; best-move search does not run on the app's main thread.
-
-Stockfish also has its own internal search thread pool. The UCI `Threads` option
-defaults to `1` in the vendored engine, so a normal search uses one Stockfish
-search worker unless your app explicitly sends a command such as
-`setoption name Threads value 4`. A single busy search worker can still consume
-roughly one CPU core while it is thinking.
-
-Search duration should normally be controlled with Stockfish UCI limits:
-`go movetime <milliseconds>` for a wall-clock move budget, `go depth <plies>`
-for a fixed-depth search, or `go nodes <count>` for a node budget. These limits
-are different from an app-side timeout in a test runner or UI. If your app-side
-timeout fires, the usual recovery is to send `stop` and use the best `bestmove`
-Stockfish returns, but `stop` is cooperative. It asks Stockfish to stop; it does
-not forcibly interrupt or kill a native thread.
-
-### Process-wide engine and command boundaries
-
-Because the upstream UCI loop uses process-wide C++ standard streams and
-process-global engine initialization, only one `SFEngine` may be active in a
-process at a time. A concurrent second `start` is rejected without starting a
-thread and its handler receives:
-
-```
-info string StockfishEmbedded error: another SFEngine instance is already active
-```
-
-After the active engine stops, a rejected instance that has not itself been
-stopped may call `start` again.
-Suspending the active instance releases its C++ stream redirect but deliberately
-retains its `SFEngine` ownership lease and loaded engine state. Resume that same
-instance after any other embedded engine has released the streams; do not start
-a second `SFEngine` while the first is suspended.
-While an engine is active, unrelated host C++ code that writes to `std::cout`
-can be captured by the bridge, so avoid such output during an engine session.
-
-`sendCommand(_:)` is a trusted native-control boundary, not a parser for
-untrusted user text. Generate UCI commands from validated app state. The wrapper
-accepts exactly one command per call (with one optional trailing LF or CRLF),
-rejects NUL/multiline/oversized commands, and intentionally rejects Stockfish's
-`Debug Log File` option because its process-static logger is incompatible with
-the wrapper's per-session stream buffers.
-
-## Known limitations
-- Engines are intended for one `start` and one terminal `stop` per instance,
-  with optional `suspend`/`resume` cycles between searches. `stop` is terminal,
-  including when called before `start`; create a new `SFEngine` after stopping.
-- Only one engine can be active per process because the embedded UCI loop uses
-  process-wide C++ streams.
-
-## Stockfish versioning
-Stockfish sources are vendored in `ThirdParty/Stockfish` as an exact upstream snapshot (history is not kept). The repository was initialized with `git subtree`; updates are manual, and clones always include the exact snapshot committed here.
-
-Key points:
-- Updates are explicit and reviewable; there is no submodule.
-- Updates may use a squashed subtree pull, or an exported upstream tree when validation must happen before committing.
-- The upstream commit hash is recorded below and in the update commit message. Older subtree metadata can be stale after an exported-tree update; compare the actual vendored tree before calculating upstream lag.
-- Current vendored upstream commit: `49ea5ded38315cff8e67f4a677a9e7811612fbf6`.
-- If Stockfish changes the default NNUE filenames, revisit the NNUE section above and download the matching nets.
-  You can confirm the required filename in `ThirdParty/Stockfish/src/evaluate.h` (`EvalFileDefaultName`).
-- Warning: Updating Stockfish (to `master` or a release tag) can break the parent repo's shim or build setup due to upstream API or initialization changes. If a build fails after an update, you may need to adjust the wrapper code in `Sources/SFEngine` to match the new Stockfish expectations.
-- Typical update workflow: fetch upstream, pull the subtree with `--squash`, check if the NNUE filenames changed, download any new nets, then build the CLI/SwiftUI smoke tests. If you see build errors in `Sources/SFEngine`, update the shim to match Stockfish's current initialization path.
-- Even if the project successfully compiles, compare the current Stockfish `main.cpp` initialization sequence with the shim in `Sources/SFEngine/EmbeddedUCI.cpp` to catch new (or deleted) init steps that could affect runtime behavior.
-
-To see the most recent vendored-source update commit (and its recorded upstream SHA):
-```
-git log -1 --pretty=%B -- ThirdParty/Stockfish
-```
-
-To pin to an official release tag (example: `sf_18`):
-```
-git subtree pull --prefix ThirdParty/Stockfish https://github.com/official-stockfish/Stockfish.git sf_18 --squash
-```
-
-To update to the latest commit on `master`:
-```
-git subtree pull --prefix ThirdParty/Stockfish https://github.com/official-stockfish/Stockfish.git master --squash
-```
-
-## License
+## Licensing
 
 **StockfishEmbedded** is licensed under the **GNU General Public License, version 3 (GPL-3.0)**. See `LICENSE`.
 Stockfish itself is GPL-3.0; see `ThirdParty/Stockfish/Copying.txt`.

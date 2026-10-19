@@ -18,6 +18,8 @@ wrapped by a small Objective-C API (`SFEngine`) that is safe to call from Swift.
 - `ThirdParty/Stockfish/` – vendored Stockfish sources.
 - `Resources/NNUE/` – NNUE network files (download required).
 - `Resources/Soak/` – default soak test positions.
+- `Docs/` – public architecture, examples, testing, troubleshooting, provenance,
+  and upstream-update guides. Keep README and DocC quick starts in sync.
 
 ## Required assets
 NNUE weights are not in Git. Download the required net before building:
@@ -41,6 +43,10 @@ configuration and incompatible-network behavior remain covered without the
 asset. Do not add the network as a SwiftPM resource or build-time download.
 
 ## Updating vendored Stockfish
+
+The public maintainer procedure is in `Docs/UpdatingStockfish.md`; source and
+network identity are recorded in `Docs/Provenance.md`. Keep those guides in
+sync with the current snapshot when doing an authorized upstream refresh.
 Stockfish is vendored in `ThirdParty/Stockfish` with `git subtree --squash`.
 Keep upstream Stockfish sources unmodified; make repo-specific integration changes
 only in this repo's wrapper/build files.
@@ -110,8 +116,9 @@ git log --grep='git-subtree-dir: ThirdParty/Stockfish' --pretty=format:'%B' -n 1
 rg -n '<old-subtree-split>|sf_[0-9]|Stockfish [0-9]|snapshot|Current vendored upstream commit' README.md Resources/NNUE/README.md
 ```
 Replace `<old-subtree-split>` with the split recorded before the subtree pull.
-Update `README.md`'s "Stockfish versioning" section so `Current vendored
-upstream commit` matches the pinned upstream SHA (or new `git-subtree-split`
+Update `README.md`'s "Maintenance and provenance" section and
+`Docs/Provenance.md` so `Current vendored upstream commit` matches the pinned
+upstream SHA (or new `git-subtree-split`
 line when using a subtree pull). Also check nearby
 versioning examples and release/snapshot wording so they do not keep pointing
 at the previous pre-update snapshot or an obsolete release tag. Historical

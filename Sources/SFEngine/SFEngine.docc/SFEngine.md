@@ -4,25 +4,22 @@ Run Stockfish in-process from an iOS, iPadOS, or macOS app.
 
 ## Overview
 
-StockfishEmbedded exposes the Stockfish UCI engine through a small Objective-C
-API that imports into Swift as `SFEngine`. The package provides the engine
-bridge, not a chess board, rules layer, or UCI parser. Its Stockfish code is
-licensed under GPL-3.0; review the [license](https://github.com/Trickfest/StockfishEmbedded/blob/main/LICENSE)
-before distributing an app that links it.
+StockfishEmbedded provides an engine bridge, not chess rules, game state, UI,
+or a typed UCI parser. Its Objective-C API imports into Swift as `SFEngine`.
+Stockfish and this wrapper are GPL-3.0; review the repository's
+[licensing notice](https://github.com/Trickfest/StockfishEmbedded#licensing)
+before distributing a linked app.
 
-The Swift package builds without an NNUE file, but Stockfish cannot search
-without one. NNUE is the evaluation-network data Stockfish uses to score chess
-positions. Download the network named by `SFEngine.defaultNetworkFileName`
-from Stockfish's official server, verify it, and either bundle it with your
-app or keep it in app-owned storage. The [README quick start](https://github.com/Trickfest/StockfishEmbedded#quick-start-with-swift-package-manager)
-provides the current download URL, checksum, and Xcode setup steps.
+## Getting started
 
-When upgrading the package, check `SFEngine.defaultNetworkFileName` again and
-replace the app's network if it changed. Networks from a different Stockfish
-layout are not interchangeable; the wrapper rejects an incompatible file
-before entering the UCI loop.
+Add the `SFEngine` package product, then supply its required local NNUE file.
+NNUE is evaluation-network data, not another executable. SwiftPM does not
+download or bundle it. The
+[README quick start](https://github.com/Trickfest/StockfishEmbedded#quick-start-with-swift-package-manager)
+provides the matching download, checksum, and app-resource setup.
 
-Then pass the local file URL to `SFEngine`:
+The following one-search task waits for UCI readiness and shuts down off the UI
+actor:
 
 ```swift
 import Foundation
@@ -32,34 +29,75 @@ guard let networkURL = Bundle.main.url(
     forResource: SFEngine.defaultNetworkFileName,
     withExtension: nil
 ) else {
-    fatalError("Missing Stockfish NNUE network in the app bundle")
+    fatalError("Missing \(SFEngine.defaultNetworkFileName) in the app bundle")
 }
 
-let engine = SFEngine(networkFileURL: networkURL) { line in
-    print(line)
-}
+let searchTask = Task.detached {
+    let (lines, output) = AsyncStream<String>.makeStream()
+    let engine = SFEngine(networkFileURL: networkURL) { line in
+        output.yield(line)
+    }
+    defer {
+        engine.stop()
+        output.finish()
+    }
 
-engine.start()
-engine.sendCommand("uci")
-engine.sendCommand("isready")
-// After receiving both `uciok` and `readyok` in the line handler:
-engine.sendCommand("position startpos")
-engine.sendCommand("go depth 8")
+    engine.start()
+    engine.sendCommand("uci")
+
+    for await line in lines {
+        print(line)
+        if line.hasPrefix("info string StockfishEmbedded error")
+            || line.hasPrefix("bestmove ") {
+            break
+        }
+        if line == "uciok" {
+            engine.sendCommand("isready")
+        } else if line == "readyok" {
+            engine.sendCommand("position startpos")
+            engine.sendCommand("go depth 8")
+        }
+    }
+}
 ```
 
-Keep the network file unchanged and the engine strongly referenced until
-`engine.stop()`. A missing or incompatible network reports an
-`info string StockfishEmbedded error` line instead of entering the UCI loop.
+Keep the task handle to cancel it with the owning screen. An async command-line
+client must await `searchTask.value` before exiting. This example has no startup
+deadline; production clients should use timeouts and request attribution as
+shown by SwiftChessDemo.
 
-> Important: Only one `SFEngine` may be active in a process. UCI output arrives
-> on a background serial queue; dispatch UI updates to the main actor. `stop()`
-> waits for the engine thread to finish, so avoid calling it from the main actor
-> during a long search.
+## Runtime assets
 
-When switching between in-process engines, wait for `bestmove`, call
-`suspend()` to release Stockfish's process-wide stream ownership, and later
-call `resume()` on the same instance. Unlike `stop()`, suspension preserves
-the loaded NNUE network. Repeat the UCI handshake after resuming.
+`SFEngine.defaultNetworkFileName` identifies the required network. Keep its
+verified local file accessible and unchanged until the engine stops. On upgrades,
+replace it when the expected filename or format changes. A missing or incompatible
+file reports an `info string StockfishEmbedded error` line; the UCI loop is not
+entered. Legacy Xcode targets have a different, embedded-network build path.
+
+## Lifecycle and threading
+
+`start()` does not perform a handshake: callers send `uci` and `isready` and
+wait for replies. Output is ordered on a serial background queue. Dispatch UI
+work to the main actor and keep blocking teardown away from it.
+
+UCI `stop` requests a search's terminal bestmove; wrapper `stop()` is terminal
+for that instance. After completed searches, `suspend()`/`resume()` can preserve
+loaded NNUE while releasing the stream redirect. A suspended instance retains
+its SFEngine ownership lease; resume that instance and repeat the handshake.
+
+Generate single-line UCI from validated app state. Only one SFEngine may own
+its native slot, and the app must serialize Stockfish with Arasan because both
+use process-wide streams. They do not share a cross-package native scheduler.
+
+## Reference app and validation
+
+[SwiftChessDemo](https://github.com/Trickfest/SwiftChessDemo) uses both embedded
+engines with SwiftChessTools. See the repository's
+[Examples](https://github.com/Trickfest/StockfishEmbedded/blob/main/Docs/Examples.md),
+[Testing](https://github.com/Trickfest/StockfishEmbedded/blob/main/Docs/Testing.md),
+and [Troubleshooting](https://github.com/Trickfest/StockfishEmbedded/blob/main/Docs/Troubleshooting.md)
+guides. The existing soak runner is Xcode test/CLI infrastructure, not an
+exported SwiftPM API.
 
 ## Topics
 

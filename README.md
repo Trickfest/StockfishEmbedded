@@ -37,7 +37,7 @@ For a manifest-based client, add these entries to its existing manifest:
 dependencies: [
     .package(
         url: "https://github.com/Trickfest/StockfishEmbedded.git",
-        from: "1.13.0"
+        from: "1.14.0"
     ),
 ],
 targets: [
@@ -59,7 +59,8 @@ another version, use that version's network filename and setup instructions.
 
 NNUE stands for *Efficiently Updatable Neural Network*. It is the data
 Stockfish uses to evaluate chess positions, not another executable. This
-snapshot requires `nn-252f33942263.nnue`, 98,668,604 bytes: roughly 99 MB (94 MiB).
+snapshot requires `nn-c9e480e92425.nnue`, 113,178,980 bytes: roughly 113 MB
+(108 MiB).
 
 From a repository clone, run:
 
@@ -73,15 +74,15 @@ directly:
 
 ```sh
 curl --proto '=https' --tlsv1.2 --location --fail --show-error \
-  https://tests.stockfishchess.org/api/nn/nn-252f33942263.nnue \
-  --output nn-252f33942263.nnue
-shasum -a 256 nn-252f33942263.nnue
+  https://tests.stockfishchess.org/api/nn/nn-c9e480e92425.nnue \
+  --output nn-c9e480e92425.nnue
+shasum -a 256 nn-c9e480e92425.nnue
 ```
 
 Compare the result with the expected SHA-256:
 
 ```text
-252f33942263bc8b8f740ba8aec3fed5a159ff148113c47a55c18c33d6627ab3
+c9e480e92425f887df6ab9b05c6180fbd762b07879df9d9845f1aa75440caa73
 ```
 
 Drag the verified file into your app project, enable the app target's
@@ -152,9 +153,11 @@ entering the UCI loop; a missing or incompatible file reports an
 `info string StockfishEmbedded error` line without terminating the host app.
 
 When upgrading, check `SFEngine.defaultNetworkFileName` again. Network layouts
-can change; the previous `nn-134a887f4c8f.nnue` is incompatible with this
-snapshot. The older Xcode static-library targets instead embed the ignored
-local network at build time; see [legacy integration](PROJECT_INTEGRATION.md).
+can change: this snapshot uses SFNNv18. The preceding `nn-252f33942263.nnue`
+and older PSQT-layout `nn-134a887f4c8f.nnue` are incompatible; replace the app's
+network when upgrading. The older Xcode static-library targets instead embed
+the ignored local network at build time; see
+[legacy integration](PROJECT_INTEGRATION.md).
 
 ## Lifecycle and threading
 
@@ -215,7 +218,7 @@ deferred; local validation remains the required evidence.
 - [Updating Stockfish](Docs/UpdatingStockfish.md): maintainer update procedure.
 - [Changelog](CHANGELOG.md): package change history.
 
-Current vendored upstream commit: `49ea5ded38315cff8e67f4a677a9e7811612fbf6`.
+Current vendored upstream commit: `effdc3fd3f6de6e75fe1374a51a7a7eed66f880b`.
 Upstream sources remain unmodified; wrapper code lives outside
 `ThirdParty/Stockfish`. The DocC catalog at
 `Sources/SFEngine/SFEngine.docc` documents the public SwiftPM API.

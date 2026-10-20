@@ -5,7 +5,7 @@ StockfishEmbedded vendors an exact source snapshot from
 `ThirdParty/Stockfish`:
 
 ```text
-49ea5ded38315cff8e67f4a677a9e7811612fbf6
+effdc3fd3f6de6e75fe1374a51a7a7eed66f880b
 ```
 
 ## Source identity
@@ -23,17 +23,19 @@ that tree, principally in `Sources/SFEngine`.
 
 ## Network identity
 
-This snapshot expects `nn-252f33942263.nnue`, 98,668,604 bytes, with SHA-256:
+This SFNNv18 snapshot expects `nn-c9e480e92425.nnue`, 113,178,980 bytes, with
+SHA-256:
 
 ```text
-252f33942263bc8b8f740ba8aec3fed5a159ff148113c47a55c18c33d6627ab3
+c9e480e92425f887df6ab9b05c6180fbd762b07879df9d9845f1aa75440caa73
 ```
 
 The file is an ignored local asset, not a package resource. The download helper
 verifies the hash prefix encoded in its filename; the full local gate also
 checks the documented full digest against the file. See
-[network setup](../Resources/NNUE/README.md). The previous PSQT network layout
-is incompatible with this snapshot.
+[network setup](../Resources/NNUE/README.md). The preceding SFNNv17 network
+`nn-252f33942263.nnue` and older PSQT-layout networks are incompatible with
+this snapshot.
 
 ## Test fixtures and notices
 

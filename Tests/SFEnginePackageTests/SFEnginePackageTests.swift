@@ -81,9 +81,11 @@ private func localNetwork(named filename: String) -> URL? {
 }
 
 private let localNetworkURL = localNetwork(named: SFEngine.defaultNetworkFileName)
-// A real network from the prior PSQT layout is a stronger migration check than
-// arbitrary corrupt bytes. This remains optional in clean source-only builds.
-private let previousNetworkURL = localNetwork(named: "nn-134a887f4c8f.nnue")
+// Real networks from the preceding layout and the older PSQT layout are
+// stronger migration checks than arbitrary corrupt bytes. These remain
+// optional in clean source-only builds; never download them just for a test.
+private let previousNetworkURLs = ["nn-252f33942263.nnue", "nn-134a887f4c8f.nnue"]
+    .compactMap { localNetwork(named: $0) }
 
 // Instrumenting native NNUE startup with TSan exceeds the normal ten-second
 // handshake bound on this Mac. This is a startup safety deadline, not a search
@@ -118,7 +120,7 @@ private func negotiate(_ engine: SFEngine, sink: PackageLineSink) throws {
 struct SFEnginePackageRuntimeTests {
     @Test
     func defaultNetworkMatchesVendoredSnapshot() {
-        #expect(SFEngine.defaultNetworkFileName == "nn-252f33942263.nnue")
+        #expect(SFEngine.defaultNetworkFileName == "nn-c9e480e92425.nnue")
     }
 
     @Test
@@ -324,20 +326,21 @@ struct SFEnginePackageRuntimeTests {
 
     @Test(
         .enabled(
-            if: previousNetworkURL != nil,
-            "The previous-layout network is an optional local migration fixture"
+            if: !previousNetworkURLs.isEmpty,
+            "Previous-layout networks are optional local migration fixtures"
         )
     )
     func previousNetworkLayoutIsRejectedWithoutTerminatingTheProcess() throws {
-        let networkURL = try #require(previousNetworkURL)
-        let sink = PackageLineSink()
-        let engine = SFEngine(networkFileURL: networkURL) { sink.append($0) }
-        defer { engine.stop() }
+        for networkURL in previousNetworkURLs {
+            let sink = PackageLineSink()
+            let engine = SFEngine(networkFileURL: networkURL) { sink.append($0) }
+            defer { engine.stop() }
 
-        engine.start()
-        #expect(sink.wait(timeout: 10.0) {
-            $0.contains("incompatible with this Stockfish build")
-        } != nil)
+            engine.start()
+            #expect(sink.wait(timeout: 10.0) {
+                $0.contains("incompatible with this Stockfish build")
+            } != nil, "Expected rejection of \(networkURL.lastPathComponent)")
+        }
     }
 
     @Test(

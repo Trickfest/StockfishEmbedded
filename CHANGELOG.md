@@ -6,8 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.14.0] - 2026-10-20
+
+### Changed
+
+- Refresh vendored Stockfish to `effdc3fd3f6de6e75fe1374a51a7a7eed66f880b`,
+  fourteen upstream commits after the previous snapshot, including legal-only
+  move generation, mate-finding/search improvements, and NNUE optimizations.
+- Adopt upstream's SFNNv18 architecture and matching `nn-c9e480e92425.nnue`
+  network. Replace app-bundled or app-managed networks when upgrading; the
+  preceding `nn-252f33942263.nnue` layout is incompatible. Network files remain
+  ignored local assets, not Swift package resources.
+- Replace the retired `half_ka_v2_hm.cpp` feature source with `k32q2.cpp` in
+  SwiftPM and both legacy Xcode library targets. The upstream startup sequence
+  and external-network loader API are unchanged, so the embedded shim and
+  public wrapper API do not need changes.
+
 ### Tests
 
+- Check rejection of the preceding network as well as the older PSQT network
+  whenever those optional migration fixtures are available locally.
 - Expand external-network SwiftPM lifecycle, readiness, ownership/retry,
   callback-safe shutdown, failed-startup recovery, and terminal-position checks.
 - Add matching independently authored position fixtures for both embedded
@@ -15,14 +33,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Strengthen soak invalid-input, cancellation, concurrent-run, completion-order,
   and timeout terminal-barrier checks using the existing runner.
 - Add Thread Sanitizer package tests and clean committed-source notice checks
-  to the local validation gate. Production code and public APIs are unchanged.
+  to the local validation gate. These test-infrastructure additions do not
+  change the production wrapper or public APIs.
 
 ### Documentation
 
 - Align README and DocC organization with ArasanEmbedded, make readiness-gated
   search examples explicit, and add focused architecture, examples, testing,
-  troubleshooting, provenance, and upstream-update guides. Public APIs and
-  production/test behavior are unchanged.
+  troubleshooting, provenance, and upstream-update guides. These documentation
+  changes do not alter APIs or runtime behavior.
 
 ## [1.13.0] - 2026-10-09
 

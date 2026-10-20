@@ -44,7 +44,7 @@ let stockfishCoreSources = [
     "ThirdParty/Stockfish/src/ucioption.cpp",
     "ThirdParty/Stockfish/src/nnue/network.cpp",
     "ThirdParty/Stockfish/src/nnue/nnue_accumulator.cpp",
-    "ThirdParty/Stockfish/src/nnue/features/half_ka_v2_hm.cpp",
+    "ThirdParty/Stockfish/src/nnue/features/k32q2.cpp",
     "ThirdParty/Stockfish/src/nnue/features/full_threats.cpp",
     "ThirdParty/Stockfish/src/nnue/features/pp_3wide.cpp",
     "ThirdParty/Stockfish/src/nnue/nnue_misc.cpp",

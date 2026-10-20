@@ -50,7 +50,10 @@ suspend/resume. Readiness-gated package checks also cover ownership/retry,
 callback-safe stop, terminal stop (including before startup), failed-startup
 recovery, and line-index boundaries for repeated readiness/searches.
 Valid-network tests require the ignored current network under
-`Resources/NNUE`. The previous-layout network is an optional migration fixture.
+`Resources/NNUE`. Previous-layout networks are optional migration fixtures:
+`nn-252f33942263.nnue` from the preceding snapshot and the older PSQT network
+`nn-134a887f4c8f.nnue`, when available. Their rejection must not terminate the
+host process; the tests never download an obsolete network.
 Their `.enabled` conditions make absent asset-dependent cases visible as skips;
 unconfigured and corrupt-network checks still run without a downloaded model.
 

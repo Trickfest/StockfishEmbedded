@@ -20,7 +20,7 @@
 		A1F000000000000000000303 /* ucioption.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000203 /* ucioption.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		A1F000000000000000000304 /* network.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000204 /* network.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		A1F000000000000000000305 /* nnue_accumulator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000205 /* nnue_accumulator.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
-		A1F000000000000000000306 /* half_ka_v2_hm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000206 /* half_ka_v2_hm.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000306 /* k32q2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000206 /* k32q2.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		A1F000000000000000000307 /* full_threats.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000207 /* full_threats.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		A1F000000000000000000308 /* nnue_misc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000208 /* nnue_misc.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		A1F000000000000000000309 /* misc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000209 /* misc.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
@@ -48,7 +48,7 @@
 		A1F000000000000000000383 /* ucioption.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000203 /* ucioption.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		A1F000000000000000000384 /* network.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000204 /* network.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		A1F000000000000000000385 /* nnue_accumulator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000205 /* nnue_accumulator.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
-		A1F000000000000000000386 /* half_ka_v2_hm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000206 /* half_ka_v2_hm.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
+		A1F000000000000000000386 /* k32q2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000206 /* k32q2.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		A1F000000000000000000387 /* full_threats.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000207 /* full_threats.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		A1F000000000000000000388 /* nnue_misc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000208 /* nnue_misc.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		A1F000000000000000000389 /* misc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1F000000000000000000209 /* misc.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
@@ -151,7 +151,7 @@
 		A1F000000000000000000203 /* ucioption.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ucioption.cpp; sourceTree = "<group>"; };
 		A1F000000000000000000204 /* network.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = network.cpp; sourceTree = "<group>"; };
 		A1F000000000000000000205 /* nnue_accumulator.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = nnue_accumulator.cpp; sourceTree = "<group>"; };
-		A1F000000000000000000206 /* half_ka_v2_hm.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = half_ka_v2_hm.cpp; sourceTree = "<group>"; };
+		A1F000000000000000000206 /* k32q2.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = k32q2.cpp; sourceTree = "<group>"; };
 		A1F000000000000000000207 /* full_threats.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = full_threats.cpp; sourceTree = "<group>"; };
 		A1F000000000000000000208 /* nnue_misc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = nnue_misc.cpp; sourceTree = "<group>"; };
 		A1F000000000000000000209 /* misc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = misc.cpp; sourceTree = "<group>"; };
@@ -354,7 +354,7 @@
 		A1F00000000000000000000A /* features */ = {
 			isa = PBXGroup;
 			children = (
-				A1F000000000000000000206 /* half_ka_v2_hm.cpp */,
+				A1F000000000000000000206 /* k32q2.cpp */,
 				A1F000000000000000000207 /* full_threats.cpp */,
 				A1F000000000000000000218 /* pp_3wide.cpp */,
 			);
@@ -636,7 +636,7 @@
 				A1F000000000000000000303 /* ucioption.cpp in Sources */,
 				A1F000000000000000000304 /* network.cpp in Sources */,
 				A1F000000000000000000305 /* nnue_accumulator.cpp in Sources */,
-				A1F000000000000000000306 /* half_ka_v2_hm.cpp in Sources */,
+				A1F000000000000000000306 /* k32q2.cpp in Sources */,
 				A1F000000000000000000307 /* full_threats.cpp in Sources */,
 				A1F00000000000000000031A /* pp_3wide.cpp in Sources */,
 				A1F000000000000000000308 /* nnue_misc.cpp in Sources */,
@@ -670,7 +670,7 @@
 				A1F000000000000000000383 /* ucioption.cpp in Sources */,
 				A1F000000000000000000384 /* network.cpp in Sources */,
 				A1F000000000000000000385 /* nnue_accumulator.cpp in Sources */,
-				A1F000000000000000000386 /* half_ka_v2_hm.cpp in Sources */,
+				A1F000000000000000000386 /* k32q2.cpp in Sources */,
 				A1F000000000000000000387 /* full_threats.cpp in Sources */,
 				A1F00000000000000000039A /* pp_3wide.cpp in Sources */,
 				A1F000000000000000000388 /* nnue_misc.cpp in Sources */,

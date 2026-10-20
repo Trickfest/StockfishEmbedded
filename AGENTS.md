@@ -37,8 +37,8 @@ local file available until the engine stops. The wrapper preflights it with
 Stockfish's own parser before entering the UCI loop, preventing an invalid
 network from reaching Stockfish's process-terminating verification path.
 
-`swift test` runs the external-network search when the ignored local file is
-present and skips only that asset-dependent test in a clean checkout. Missing
+`swift test` runs external-network contract/search cases when the ignored local
+file is present and skips only asset-dependent cases in a clean checkout. Missing
 configuration and incompatible-network behavior remain covered without the
 asset. Do not add the network as a SwiftPM resource or build-time download.
 

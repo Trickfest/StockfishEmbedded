@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Tests
+
+- Expand external-network SwiftPM lifecycle, readiness, ownership/retry,
+  callback-safe shutdown, failed-startup recovery, and terminal-position checks.
+- Add matching independently authored position fixtures for both embedded
+  engines; retain engine-specific no-move tokens and existing regression corpora.
+- Strengthen soak invalid-input, cancellation, concurrent-run, completion-order,
+  and timeout terminal-barrier checks using the existing runner.
+- Add Thread Sanitizer package tests and clean committed-source notice checks
+  to the local validation gate. Production code and public APIs are unchanged.
+
 ### Documentation
 
 - Align README and DocC organization with ArasanEmbedded, make readiness-gated

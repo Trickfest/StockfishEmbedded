@@ -1113,18 +1113,33 @@ private final class SoakEventRecorder: @unchecked Sendable {
 
 final class SFEngineSoakRunnerTests: XCTestCase {
     func testInvalidConfigurationFailsBeforeStartingEngine() async {
-        let recorder = SoakEventRecorder()
-        let runner = SFEngineSoakRunner(configuration: .init(
-            positions: [.startpos],
-            searchLimit: .depth(0),
-            maxIterations: 1
-        ))
-
-        let summary = await runner.run { recorder.append($0) }
-
-        XCTAssertEqual(summary.iterationsAttempted, 0)
-        XCTAssertEqual(summary.errors, 1)
-        XCTAssertTrue(recorder.events.contains(.error("Search depth must be greater than zero")))
+        let configurations: [SFEngineSoakRunner.Configuration] = [
+            .init(positions: []),
+            .init(positions: [.fen("8/8/8\nquit")]),
+            .init(positions: [.startpos], searchLimit: .depth(0)),
+            .init(positions: [.startpos], searchLimit: .nodes(0)),
+            .init(positions: [.startpos], searchLimit: .moveTimeMillis(0)),
+            .init(positions: [.startpos], maxIterations: 0),
+            .init(positions: [.startpos], perMoveTimeout: .zero),
+            .init(positions: [.startpos], stopTimeout: .seconds(-1)),
+            .init(positions: [.startpos], handshakeTimeout: .zero),
+            .init(positions: [.startpos], delayBetweenIterations: .seconds(-1)),
+        ]
+        for configuration in configurations {
+            let recorder = SoakEventRecorder()
+            let summary = await SFEngineSoakRunner(configuration: configuration).run { recorder.append($0) }
+            XCTAssertEqual(summary.iterationsAttempted, 0)
+            XCTAssertEqual(summary.iterationsCompleted, 0)
+            XCTAssertEqual(summary.errors, 1)
+            XCTAssertEqual(summary.timeouts, 0)
+            XCTAssertEqual(recorder.events.count, 2)
+            guard case .error = recorder.events.first,
+                  case .finished(let emitted) = recorder.events.last else {
+                XCTFail("Invalid configuration must emit only error then finished")
+                continue
+            }
+            XCTAssertEqual(emitted, summary)
+        }
     }
 
     func testCompletedIterationEmitsOnlyBestmoveToken() async {
@@ -1144,8 +1159,9 @@ final class SFEngineSoakRunnerTests: XCTestCase {
 
         XCTAssertEqual(summary.iterationsCompleted, 1)
         XCTAssertEqual(moves.count, 1)
+        guard let move = moves.first else { return XCTFail("Expected a completed bestmove") }
         XCTAssertNotNil(
-            moves[0].range(of: #"^[a-h][1-8][a-h][1-8][nbrq]?$"#, options: .regularExpression)
+            move.range(of: #"^[a-h][1-8][a-h][1-8][nbrq]?$"#, options: .regularExpression)
         )
     }
 
@@ -1173,6 +1189,28 @@ final class SFEngineSoakRunnerTests: XCTestCase {
         XCTAssertEqual(summary.timeouts, 2)
         XCTAssertEqual(summary.errors, 0)
         XCTAssertEqual(timeoutIndices, [0, 1])
+        let events = recorder.events
+        let starts = events.indices.filter {
+            if case .iterationStarted = events[$0] { return true }
+            return false
+        }
+        let firstTimeout = events.firstIndex {
+            if case .timeout = $0 { return true }
+            return false
+        }
+        guard starts.count == 2, let firstTimeout,
+              let terminal = events[(firstTimeout + 1)...].firstIndex(where: {
+                  if case .engineOutput(let line) = $0 { return line.hasPrefix("bestmove ") }
+                  return false
+              }) else {
+            return XCTFail("Expected timeout, terminal bestmove, then the second iteration")
+        }
+        XCTAssertLessThan(firstTimeout, terminal)
+        XCTAssertLessThan(terminal, starts[1])
+        XCTAssertFalse(events.contains {
+            if case .iterationCompleted = $0 { return true }
+            return false
+        })
     }
 
     func testStopFromStartedEventIsObservedPromptly() async {
@@ -1199,8 +1237,106 @@ final class SFEngineSoakRunnerTests: XCTestCase {
         XCTAssertEqual(summary.errors, 0)
         XCTAssertTrue(recorder.events.contains(.stopped))
         XCTAssertLessThan(elapsed, .seconds(2))
+        XCTAssertEqual(Array(recorder.events.suffix(2)), [.stopped, .finished(summary)])
+    }
+
+    func testCancellationDuringSearchFinishesLastAndReleasesTheEngine() async throws {
+        let recorder = SoakEventRecorder()
+        let runner = SFEngineSoakRunner(configuration: .init(
+            positions: [.startpos], searchLimit: .depth(40)
+        ))
+        let task = Task { await runner.run { recorder.append($0) } }
+        defer { task.cancel(); runner.stop() }
+        try await waitForSearchOutput(in: recorder)
+        task.cancel()
+        let summary = await task.value
+        XCTAssertEqual(summary.errors, 0)
+        XCTAssertEqual(summary.timeouts, 0)
+        XCTAssertEqual(Array(recorder.events.suffix(2)), [.stopped, .finished(summary)])
+
+        // A fresh finite run proves cancelled teardown released native ownership.
+        let next = await SFEngineSoakRunner(configuration: .init(
+            positions: [.startpos], searchLimit: .depth(1), maxIterations: 1
+        )).run { _ in }
+        XCTAssertEqual(next.iterationsCompleted, 1)
+        XCTAssertEqual(next.errors, 0)
+    }
+
+    func testConcurrentRunIsRejectedWithoutDisturbingActiveRun() async throws {
+        let firstRecorder = SoakEventRecorder()
+        let runner = SFEngineSoakRunner(configuration: .init(
+            positions: [.startpos], searchLimit: .depth(40)
+        ))
+        let task = Task { await runner.run { firstRecorder.append($0) } }
+        defer { task.cancel(); runner.stop() }
+        try await waitForSearchOutput(in: firstRecorder)
+
+        let rejectedRecorder = SoakEventRecorder()
+        let rejected = await runner.run { rejectedRecorder.append($0) }
+        XCTAssertEqual(rejected.iterationsAttempted, 0)
+        XCTAssertEqual(rejected.errors, 1)
+        XCTAssertEqual(rejectedRecorder.events, [
+            .error("This soak runner is already running"), .finished(rejected),
+        ])
+
+        runner.stop()
+        let first = await task.value
+        XCTAssertEqual(first.errors, 0)
+        XCTAssertEqual(Array(firstRecorder.events.suffix(2)), [.stopped, .finished(first)])
+    }
+
+    func testOutputPrecedesCompletionAndFinishedMatchesReturnedSummary() async {
+        let recorder = SoakEventRecorder()
+        let runner = SFEngineSoakRunner(configuration: .init(
+            positions: [.startpos], searchLimit: .depth(1), maxIterations: 2,
+            readyCheckEveryIteration: true
+        ))
+        let summary = await runner.run { recorder.append($0) }
+        let events = recorder.events
+        XCTAssertEqual(summary.iterationsCompleted, 2)
+        XCTAssertEqual(summary.errors, 0)
+        XCTAssertEqual(events.last, .finished(summary))
+        XCTAssertEqual(events.filter { if case .finished = $0 { return true }; return false }.count, 1)
+        for index in 0..<2 {
+            guard let start = events.firstIndex(where: {
+                if case .iterationStarted(let value, _) = $0 { return value == index }
+                return false
+            }), let completed = events.firstIndex(where: {
+                if case .iterationCompleted(let value, _, _) = $0 { return value == index }
+                return false
+            }), start < completed else {
+                XCTFail("Missing or out-of-order boundaries for iteration \(index)")
+                continue
+            }
+            let terminals = events[(start + 1)..<completed].compactMap { event -> String? in
+                if case .engineOutput(let line) = event, line.hasPrefix("bestmove ") {
+                    return line.split(separator: " ").dropFirst().first.map(String.init)
+                }
+                return nil
+            }
+            XCTAssertEqual(terminals.count, 1)
+            if case .iterationCompleted(_, let move, _) = events[completed] {
+                XCTAssertEqual(terminals.first, move)
+            }
+        }
+    }
+
+    private func waitForSearchOutput(in recorder: SoakEventRecorder) async throws {
+        let clock = ContinuousClock()
+        let deadline = clock.now.advanced(by: .seconds(10))
+        while clock.now < deadline {
+            if recorder.events.contains(where: {
+                if case .engineOutput(let line) = $0 { return line.contains(" depth ") }
+                return false
+            }) { return }
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        XCTFail("Soak did not reach live search output before the deadline")
+        throw SoakSearchStartTimeout()
     }
 }
+
+private struct SoakSearchStartTimeout: Error {}
 
 final class EmbeddedUCIParityTests: XCTestCase {
     func testEmbeddedUCIStartupLifecycleMatchesVendoredMain() throws {

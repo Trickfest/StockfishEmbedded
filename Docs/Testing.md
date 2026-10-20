@@ -16,17 +16,21 @@ The gate downloads/verifies the current network if needed, checks its identity
 in the setup documentation, and runs:
 
 - Debug and Release SwiftPM builds/tests.
+- Thread Sanitizer SwiftPM tests.
 - An arm64 iOS Simulator package build.
 - A disposable clean copy without NNUE: manifest, build/tests, and the exact
   source-only SPI scheme for macOS and generic iOS Release builds.
 - The macOS legacy library, Objective-C and Swift CLI smokes, a short soak,
   and the macOS XCTest harness.
 - An iOS Simulator smoke-app build and generic-device Release library build.
+- Nonempty worktree GPL notices and, when the checkout is clean, those notices
+  in the committed SwiftPM source archive. The archive check is visibly skipped
+  for uncommitted candidates because `archive-source` packages committed HEAD.
 
 The script's iOS checks are builds, not runtime XCTest sessions on a device.
 Its five-iteration soak is a short check, not an exhaustive corpus run. It has
-no explicit Thread Sanitizer invocation, API-baseline comparison, source-archive
-notice check, or DocC build. Do not describe those as part of the current gate.
+no explicit API-baseline comparison or DocC build. Source-archive notice checks
+do not establish complete licensing compliance.
 
 ## Package tests
 
@@ -37,11 +41,15 @@ swift package dump-package
 swift build
 swift test
 swift test -c release
+swift test --sanitize=thread
 ```
 
 `Tests/SFEnginePackageTests` covers importing SFEngine, required external-network
 configuration, incompatible files, valid searches, raw EvalFile rejection, and
-suspend/resume. Valid-network tests require the ignored current network under
+suspend/resume. Readiness-gated package checks also cover ownership/retry,
+callback-safe stop, terminal stop (including before startup), failed-startup
+recovery, and line-index boundaries for repeated readiness/searches.
+Valid-network tests require the ignored current network under
 `Resources/NNUE`. The previous-layout network is an optional migration fixture.
 Their `.enabled` conditions make absent asset-dependent cases visible as skips;
 unconfigured and corrupt-network checks still run without a downloaded model.
@@ -142,6 +150,26 @@ Obvious syntax errors are rejected before native engine startup; this is not a
 substitute for a chess rules layer validating user positions. See
 [corpus provenance](../Resources/Soak/README.md).
 
+The existing XCTest soak suite checks cancellation during live search,
+concurrent-run rejection, invalid configurations, terminal output before the
+next timed-out position, output before iteration completion, final summary
+ordering, and fresh native ownership after cancellation.
+
+## Common position contract
+
+`commonPositionContractIncludesTacticsPromotionMateAndStalemate` uses the same
+six independently authored fixtures as ArasanEmbedded: opening positions for
+both sides, mate in one, promotion mate, checkmate, and stalemate. These FENs and
+allowed-move data are dedicated to the public domain under CC0-1.0 in the marked
+test-source block, not copied from a GPL benchmark or external puzzle corpus.
+Keep that block synchronized with the Arasan counterpart.
+
+Each fixture waits for readiness and a fresh terminal reply before advancing.
+The opening is searched again after the terminal positions to check recovery.
+Nonterminal moves must belong to independently established allowed sets; terminal
+positions must return Stockfish's `(none)` token (Arasan uses `0000`). The suite
+does not require identical moves, evaluations, search timing, or engine strength.
+
 ## Shared consumer checks
 
 [SwiftChessDemo](https://github.com/Trickfest/SwiftChessDemo) is the shared
@@ -164,6 +192,6 @@ Prefer observable protocol and lifecycle guarantees: readiness before search,
 terminal bestmove before reuse, bounded teardown, ownership, and callback order.
 Use small, attributed fixtures with known acceptable moves for search checks;
 do not compare exact evaluations or claim strength from a smoke/soak run.
-Retain engine-specific perft and migration regressions. Broader SwiftPM and
-soak-cancellation/event-order coverage is follow-up work, not an existing gate
-guarantee. See [Troubleshooting](Troubleshooting.md) when a check fails.
+Retain engine-specific perft and migration regressions. Shared live app scenarios
+remain SwiftChessDemo work, not a guarantee supplied by these wrapper tests.
+See [Troubleshooting](Troubleshooting.md) when a check fails.

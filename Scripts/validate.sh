@@ -30,6 +30,7 @@ swift build
 swift test
 swift build -c release
 swift test -c release
+swift test --sanitize=thread
 
 SIMULATOR_SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"
 swift build \
@@ -131,5 +132,29 @@ xcodebuild \
   -derivedDataPath build \
   CODE_SIGNING_ALLOWED=NO \
   build
+
+for license in LICENSE ThirdParty/Stockfish/Copying.txt; do
+  if [[ ! -s "$license" ]]; then
+    echo "Current worktree is missing a required nonempty license: $license" >&2
+    exit 1
+  fi
+done
+
+# archive-source packages committed HEAD, not a dirty validation candidate.
+# Always check worktree notices; check the distributable archive when clean.
+if [[ -z "$(git status --porcelain)" ]]; then
+  source_archive="$REPO_ROOT/.build/StockfishEmbedded-source.zip"
+  rm -f "$source_archive"
+  swift package archive-source --output "$source_archive"
+  archive_root="$(basename "$source_archive" .zip)"
+  for license in LICENSE ThirdParty/Stockfish/Copying.txt; do
+    if ! unzip -Z1 "$source_archive" | grep -Fx "$archive_root/$license" >/dev/null; then
+      echo "Source archive is missing required license: $license" >&2
+      exit 1
+    fi
+  done
+else
+  echo "Skipping committed-source archive check for a dirty worktree; current license files are present."
+fi
 
 echo "StockfishEmbedded validation succeeded"

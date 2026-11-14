@@ -71,7 +71,7 @@ shown by SwiftChessDemo.
 `SFEngine.defaultNetworkFileName` identifies the required network. Keep its
 verified local file accessible and unchanged until the engine stops. On upgrades,
 replace it when the expected filename or format changes. This snapshot uses
-SFNNv18 and cannot reuse networks from earlier architectures. A missing or
+SFNNv20 and cannot reuse networks from earlier architectures. A missing or
 incompatible file reports an `info string StockfishEmbedded error` line; the
 UCI loop is not entered. Legacy Xcode targets have a different,
 embedded-network build path.

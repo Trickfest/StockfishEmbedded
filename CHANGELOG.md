@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.15.0] - 2026-11-14
+
+### Changed
+
+- Refresh unmodified upstream Stockfish to `1e7e6bdeb97669a950b8e4c063770d135f54f55b`,
+  forty commits after the previous snapshot. Include search/NNUE optimizations,
+  exact repetition verification, Skill Level PV output correction and bounds
+  checking for malformed Syzygy symbol tables.
+- Adopt SFNNv20 and matching `nn-68752b755c93.nnue` (138,360,528 bytes).
+  Consumers must replace the preceding SFNNv18 network along with engine code.
+- Replace the retired `k32q2.cpp` feature source with `k32h3.cpp` in SwiftPM
+  and both legacy Xcode targets. Remove the package shim's `Position::init()`
+  call to match upstream's compile-time initialization, and extend startup-parity
+  checks to recognize `Attacks::init()`.
+- Add the preceding SFNNv18 network to optional incompatible-network regression
+  fixtures. Keep downloaded model weights out of source distributions.
+
 ## [1.14.0] - 2026-10-20
 
 ### Changed

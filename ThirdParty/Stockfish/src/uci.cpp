@@ -23,6 +23,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
+#include <initializer_list>
 #include <iterator>
 #include <optional>
 #include <sstream>
@@ -60,12 +61,8 @@ overload(Ts...) -> overload<Ts...>;
 void UCIEngine::print_info_string(std::string_view str) {
     sync_cout_start();
     for (auto& line : split(str, "\n"))
-    {
         if (!is_whitespace(line))
-        {
             std::cout << "info string " << line << '\n';
-        }
-    }
     sync_cout_end();
 }
 
@@ -148,9 +145,7 @@ void UCIEngine::loop() {
         else if (token == "flip")
         {
             if (auto err = engine.flip())
-            {
                 terminate_on_critical_error(err->what());
-            }
         }
         else if (token == "bench")
             bench(is);
@@ -231,6 +226,11 @@ Search::LimitsType UCIEngine::parse_limits(std::istream& is) {
         if (is.fail())
             terminate_on_critical_error("Invalid argument for '" + token + "'");
     }
+
+    // Sanitize negative time values, zero for stm means no TM
+    for (auto* t : {&limits.time[WHITE], &limits.time[BLACK], &limits.movetime})
+        if (*t < 0)
+            *t = 1;
 
     return limits;
 }
@@ -361,9 +361,7 @@ void UCIEngine::benchmark(std::istream& args) {
         else if (token == "position")
             position(is);
         else if (token == "ucinewgame")
-        {
             engine.search_clear();  // search_clear may take a while
-        }
 
         if (cnt > NUM_WARMUP_POSITIONS)
             break;
@@ -431,9 +429,7 @@ void UCIEngine::benchmark(std::istream& args) {
         else if (token == "position")
             position(is);
         else if (token == "ucinewgame")
-        {
             engine.search_clear();  // search_clear may take a while
-        }
     }
 
     // Ensure positivity to avoid a 'divide by zero'
@@ -514,15 +510,11 @@ void UCIEngine::position(std::istringstream& is) {
     std::vector<std::string> moves;
 
     while (is >> token)
-    {
         moves.push_back(token);
-    }
 
     auto err = engine.set_position(fen, moves);
     if (err.has_value())
-    {
         terminate_on_critical_error(err->what());
-    }
 }
 
 namespace {

@@ -157,8 +157,7 @@ void update_all_stats(const Position& pos,
                       SearchedList&   quietsSearched,
                       SearchedList&   capturesSearched,
                       Depth           depth,
-                      Move            ttMove,
-                      bool            PvNode);
+                      Move            ttMove);
 
 // Detect shuffling moves in order to limit search explosions. This code was
 // added in #6447 as non-regression, and so its parameters should not be tuned.
@@ -348,6 +347,9 @@ bool Search::Worker::iterative_deepening() {
     {
         rootDepth++;
 
+        // Do not tune these values. They are not intended for playing strength.
+        int seekMateThreshold = 750 + 220000 / (rootDepth * rootDepth);
+
         // Signal the start of a new iteration
         if (mainThread)
             uciPvSent = false;
@@ -388,11 +390,11 @@ bool Search::Worker::iterative_deepening() {
             alpha     = std::max(avg - delta, -VALUE_INFINITE);
             beta      = std::min(avg + delta, VALUE_INFINITE);
 
-            // Do not tune these values. They are not intended for playing strength.
-            seekMate = std::abs(rootMoves[pvIdx].score) >= 750 + 220000 / (rootDepth * rootDepth);
+            seekMate = rootMoves[pvIdx].previousScore != -VALUE_INFINITE
+                    && std::abs(rootMoves[pvIdx].previousScore) >= seekMateThreshold;
 
             // Adjust optimism based on root move's averageScore
-            optimism[us]  = 114 * avg / (std::abs(avg) + 85);
+            optimism[us]  = 456 * avg / (std::abs(avg) + 85);
             optimism[~us] = -optimism[us];
 
             // Start with a small aspiration window and, in the case of a fail
@@ -612,7 +614,7 @@ bool Search::Worker::iterative_deepening() {
 
             if (rootMoves.size() == 1)
                 // Cap used time to 0.5s for a better viewer experience
-                totalTime = std::min(500.0, totalTime);
+                totalTime = std::min(500.0 * std::max(limits.npmsec, TimePoint(1)), totalTime);
 
             auto elapsedTime = elapsed();
 
@@ -643,16 +645,16 @@ bool Search::Worker::iterative_deepening() {
 
     // If the skill level is enabled, swap the best PV line with the sub-optimal one
     if (skill.enabled())
-        std::swap(rootMoves[0],
-                  *std::find(rootMoves.begin(), rootMoves.end(),
-                             skill.best ? skill.best : skill.pick_best(rootMoves, multiPV)));
+    {
+        Move pick = skill.best ? skill.best : skill.pick_best(rootMoves, multiPV);
+        if (pick != rootMoves[0].pv[0])
+        {
+            std::swap(rootMoves[0], *std::find(rootMoves.begin(), rootMoves.end(), pick));
+            uciPvSent = false;
+        }
+    }
 
     return uciPvSent;
-}
-
-
-void Search::Worker::do_move(Position& pos, const Move move, StateInfo& st, Stack* const ss) {
-    do_move(pos, move, st, pos.gives_check(move), pos.capture_stage(move), ss);
 }
 
 void Search::Worker::do_move(Position&    pos,
@@ -664,7 +666,7 @@ void Search::Worker::do_move(Position&    pos,
     // prefetch_key() does not model castling, en passant or promotion exactly.
     // The correction-history prefetches also approximate castling and promotion.
     // For these rare moves the prefetches land on unused lines.
-    prefetch(tt.first_entry(pos.prefetch_key(move)));
+    prefetch(tt.get_cluster(pos.prefetch_key(move)));
 
     if (ss != nullptr)
     {
@@ -678,8 +680,8 @@ void Search::Worker::do_move(Position&    pos,
 
     ++nodes;
 
-    Dirties& dirties = accumulatorStack.push();
-    pos.do_move(move, st, givesCheck, dirties, &tt, &sharedHistory);
+    Dirties& dirties = accumulatorStack.push(pos);
+    pos.do_move(move, st, givesCheck, dirties, &sharedHistory);
 
     if (ss != nullptr)
     {
@@ -1039,7 +1041,8 @@ Value Search::Worker::search(
         assert((ss - 1)->currentMove != Move::null());
 
         // Null move dynamic reduction based on depth
-        Depth R = 7 + depth / 3 + std::max((ss->staticEval - beta) / 256, 0);
+        // Odd threads reduce one ply less
+        Depth R = 7 + depth / 3 + std::max((ss->staticEval - beta) / 256, 0) - int(threadIdx & 1);
         R -= seekMate * R / 2;
         do_null_move(pos, st, ss);
 
@@ -1574,12 +1577,7 @@ moves_loop:  // When in check, search starts here
         // If the move is worse than some previously searched move,
         // remember it, to update its stats later.
         if (move != bestMove && moveCount <= SEARCHEDLIST_CAPACITY)
-        {
-            if (capture)
-                capturesSearched.push_back(move);
-            else
-                quietsSearched.push_back(move);
-        }
+            (capture ? capturesSearched : quietsSearched).push_back(move);
     }
 
     // Step 23. Check for mate and stalemate, otherwise update bestmove/countermove stats
@@ -1601,7 +1599,7 @@ moves_loop:  // When in check, search starts here
     else if (bestMove)
     {
         update_all_stats(pos, ss, *this, bestMove, prevSq, quietsSearched, capturesSearched, depth,
-                         ttData.move, PvNode);
+                         ttData.move);
         if (!PvNode)
             ttMoveHistory << (bestMove == ttData.move ? 918 : -747);
     }
@@ -1992,8 +1990,7 @@ void update_all_stats(const Position& pos,
                       SearchedList&   quietsSearched,
                       SearchedList&   capturesSearched,
                       Depth           depth,
-                      Move            ttMove,
-                      bool            PvNode) {
+                      Move            ttMove) {
 
     CapturePieceToHistory& captureHistory = workerThread.captureHistory;
     Piece                  movedPiece     = pos.moved_piece(bestMove);
@@ -2003,10 +2000,9 @@ void update_all_stats(const Position& pos,
       std::min(133 * depth - 81, 1487) + 364 * (bestMove == ttMove) + (ss - 1)->statScore / 28;
     int malus = std::min(968 * depth - 235, 2244);
 
-    if (!PvNode)
-        // Important: don't remove the cast to a 64-bit number else the multiplication
-        // can overflow on 32-bit platforms which would change the bench signature
-        bonus += int(bonus * u64(quietsSearched.size() + capturesSearched.size()) / 256);
+    // Important: don't remove the cast to a 64-bit number else the multiplication
+    // can overflow on 32-bit platforms which would change the bench signature
+    bonus += int(bonus * u64(quietsSearched.size() + capturesSearched.size()) / 256);
 
     if (!pos.capture_stage(bestMove))
     {
@@ -2382,7 +2378,7 @@ bool RootMove::extract_ponder_from_tt(const TranspositionTable& tt, Position& po
     assert(pv.size() == 1 && pv[0] != Move::none());
 
     StateInfo st;
-    pos.do_move(pv[0], st, &tt);
+    pos.do_move(pv[0], st);
 
     if (!pos.is_draw(1))
     {

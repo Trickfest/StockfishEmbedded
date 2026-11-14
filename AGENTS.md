@@ -100,8 +100,8 @@ entry point. This shim intentionally mimics Stockfish `main()` before calling
 ```
 rg -n 'EvalFileDefaultName|nn-[a-f0-9]+\.nnue' ThirdParty/Stockfish/src
 ```
-The current vendored snapshot is `effdc3fd3f6de6e75fe1374a51a7a7eed66f880b`
-and requires `nn-c9e480e92425.nnue` (SFNNv18).
+The current vendored snapshot is `1e7e6bdeb97669a950b8e4c063770d135f54f55b`
+and requires `nn-68752b755c93.nnue` (SFNNv20).
 Download any new required nets into `Resources/NNUE/`,
 delete obsolete local `.nnue` files that are no longer referenced by the
 current Stockfish snapshot, and update this file, `README.md`, and

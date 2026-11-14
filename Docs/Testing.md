@@ -51,7 +51,8 @@ callback-safe stop, terminal stop (including before startup), failed-startup
 recovery, and line-index boundaries for repeated readiness/searches.
 Valid-network tests require the ignored current network under
 `Resources/NNUE`. Previous-layout networks are optional migration fixtures:
-`nn-252f33942263.nnue` from the preceding snapshot and the older PSQT network
+`nn-c9e480e92425.nnue` from the preceding snapshot, SFNNv17
+`nn-252f33942263.nnue`, and the older PSQT network
 `nn-134a887f4c8f.nnue`, when available. Their rejection must not terminate the
 host process; the tests never download an obsolete network.
 Their `.enabled` conditions make absent asset-dependent cases visible as skips;

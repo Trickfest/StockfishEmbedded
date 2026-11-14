@@ -179,7 +179,6 @@ class EmbeddedUCISession::Impl {
 
         // Mimic Stockfish's main() setup so evaluation tables and options are ready.
         Attacks::init();
-        Position::init();
 
         // Stockfish expects argc/argv through CommandLine; fake them.
         std::vector<std::string> argvStorage = {"stockfish"};

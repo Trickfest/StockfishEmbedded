@@ -1413,6 +1413,8 @@ final class EmbeddedUCIParityTests: XCTestCase {
 
             if line.contains("Bitboards::init()") {
                 lifecycle.append("Bitboards::init")
+            } else if line.contains("Attacks::init()") {
+                lifecycle.append("Attacks::init")
             } else if line.contains("Position::init()") {
                 lifecycle.append("Position::init")
             } else if line.contains("std::make_unique<UCIEngine>") {

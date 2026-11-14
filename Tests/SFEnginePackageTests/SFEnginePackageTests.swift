@@ -84,7 +84,7 @@ private let localNetworkURL = localNetwork(named: SFEngine.defaultNetworkFileNam
 // Real networks from the preceding layout and the older PSQT layout are
 // stronger migration checks than arbitrary corrupt bytes. These remain
 // optional in clean source-only builds; never download them just for a test.
-private let previousNetworkURLs = ["nn-252f33942263.nnue", "nn-134a887f4c8f.nnue"]
+private let previousNetworkURLs = ["nn-c9e480e92425.nnue", "nn-252f33942263.nnue", "nn-134a887f4c8f.nnue"]
     .compactMap { localNetwork(named: $0) }
 
 // Instrumenting native NNUE startup with TSan exceeds the normal ten-second
@@ -120,7 +120,7 @@ private func negotiate(_ engine: SFEngine, sink: PackageLineSink) throws {
 struct SFEnginePackageRuntimeTests {
     @Test
     func defaultNetworkMatchesVendoredSnapshot() {
-        #expect(SFEngine.defaultNetworkFileName == "nn-c9e480e92425.nnue")
+        #expect(SFEngine.defaultNetworkFileName == "nn-68752b755c93.nnue")
     }
 
     @Test
